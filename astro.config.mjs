@@ -1,0 +1,2 @@
+// Astro Configuration
+export default {};

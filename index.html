@@ -1,3 +1,193 @@
-<h1>블로그</h1>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>voidspace0x</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #0e0e0e;
+      color: #eee;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background-color: #1a1a1a;
+    }
+    header h1 {
+      margin: 0;
+      color: #00ffe1;
+      cursor: pointer;
+    }
+    header nav a {
+      color: #ccc;
+      margin-left: 1rem;
+      text-decoration: none;
+    }
+    .container {
+      display: flex;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 2rem;
+    }
+    .main-post {
+      flex: 2;
+      margin-right: 2rem;
+    }
+    .main-post img {
+      width: 100%;
+      border-radius: 10px;
+    }
+    .main-post h2 {
+      margin-top: 1rem;
+    }
+    .sidebar {
+      flex: 1;
+    }
+    .article-list {
+      list-style: none;
+      padding: 0;
+    }
+    .article-list li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #333;
+    }
+    .article-list li a {
+      color: #0ff;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .article-list li .date {
+      float: right;
+      color: #777;
+    }
+    #post-content-wrapper {
+      display: none;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 2rem;
+      display: flex;
+    }
+    #post-content {
+      flex: 3;
+      padding-right: 2rem;
+    }
+    #post-content h2 {
+      color: #00ffe1;
+    }
+    .post-sidebar {
+      flex: 1;
+      border-left: 1px solid #333;
+      padding-left: 2rem;
+    }
+    pre code {
+      background: #222;
+      padding: 0.5rem;
+      display: block;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 onclick="goHome()">voidspace0x</h1>
+    <nav>
+      <a href="index.html">HOME</a>
+      <a href="#">ABOUT</a>
+    </nav>
+  </header>
 
-<p style="color:blue">반갑습니다!</p>
+  <div class="container" id="main-view">
+    <div class="main-post">
+      <img src="https://placehold.co/600x400/111/eee?text=Main+Visual" alt="메인 비주얼" />
+      <h2>'알트 대장' 이더리움, 2025 하반기 가격 전망은?</h2>
+      <p>미국 현물 ETF 출시로 뜨거운 관심을 받는 이더리움의 가격 전망 분석...</p>
+    </div>
+    <aside class="sidebar">
+      <h3>Articles</h3>
+      <ul class="article-list" id="post-list"></ul>
+    </aside>
+  </div>
+
+  <div id="post-content-wrapper">
+    <div id="post-content"></div>
+    <aside class="post-sidebar">
+      <h3>More Posts</h3>
+      <ul class="article-list" id="post-list-clone"></ul>
+    </aside>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    const posts = [
+      {
+        title: "첫 번째 포스트",
+        date: "25.07.22",
+        file: "posts/2025-07-22_no001.md"
+      },
+      {
+        title: "두 번째 이야기",
+        date: "25.07.21",
+        file: "posts/2025-07-21_no002.md"
+      }
+    ];
+
+    const listContainer = document.getElementById('post-list');
+    const listCloneContainer = document.getElementById('post-list-clone');
+    const contentWrapper = document.getElementById('post-content-wrapper');
+    const contentContainer = document.getElementById('post-content');
+    const mainView = document.getElementById('main-view');
+
+    let currentPostIndex = null;
+
+    function goHome() {
+      contentWrapper.style.display = 'none';
+      mainView.style.display = 'flex';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderPost(index) {
+      const post = posts[index];
+      currentPostIndex = index;
+
+      fetch(post.file)
+        .then(res => res.text())
+        .then(md => {
+          contentContainer.innerHTML = `
+            <article>
+              <h2>${post.title}</h2>
+              <p class='post-date'>${post.date}</p>
+              <div>${marked.parse(md)}</div>
+              <div class="post-nav">
+                ${index > 0 ? `<button onclick="renderPost(${index - 1})">← 이전 글</button>` : ''}
+                ${index < posts.length - 1 ? `<button onclick="renderPost(${index + 1})">다음 글 →</button>` : ''}
+              </div>
+            </article>
+          `;
+          mainView.style.display = 'none';
+          contentWrapper.style.display = 'flex';
+          contentWrapper.scrollIntoView({ behavior: 'smooth' });
+        });
+    }
+
+    posts.forEach((post, idx) => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.innerText = post.title;
+      a.href = "#";
+      a.onclick = () => renderPost(idx);
+      const dateSpan = document.createElement('span');
+      dateSpan.className = 'date';
+      dateSpan.innerText = post.date;
+      li.appendChild(a);
+      li.appendChild(dateSpan);
+      listContainer.appendChild(li);
+      listCloneContainer.appendChild(li.cloneNode(true));
+    });
+  </script>
+</body>
+</html>

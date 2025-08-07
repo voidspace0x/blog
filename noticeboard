@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>블로그 게시판</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 600px;
+      margin: 0 auto 30px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    input, textarea {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    #posts {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .post {
+      background: white;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .post h3 {
+      margin: 0 0 5px;
+    }
+    .post p {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>📌 블로그 게시판</h1>
+  <form id="postForm">
+    <input type="text" id="title" placeholder="제목" required />
+    <textarea id="content" placeholder="내용을 입력하세요..." rows="5" required></textarea>
+    <button type="submit">게시하기</button>
+  </form>
+
+  <div id="posts"></div>
+
+  <script>
+    const form = document.getElementById('postForm');
+    const postsDiv = document.getElementById('posts');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const title = document.getElementById('title').value.trim();
+      const content = document.getElementById('content').value.trim();
+
+      if (!title || !content) return;
+
+      const post = document.createElement('div');
+      post.className = 'post';
+
+      const titleEl = document.createElement('h3');
+      titleEl.textContent = title;
+
+      const contentEl = document.createElement('p');
+      contentEl.textContent = content;
+
+      post.appendChild(titleEl);
+      post.appendChild(contentEl);
+
+      postsDiv.prepend(post);
+
+      form.reset();
+    });
+  </script>
+</body>
+</html>

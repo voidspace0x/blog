@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>voidspace0x | 게시판</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -80,8 +81,7 @@
       margin: 0 0 5px;
       color: #ffffff;
     }
-    .post p {
-      margin: 0;
+    .post .markdown {
       color: #dddddd;
     }
   </style>
@@ -100,7 +100,7 @@
     <h1>📌 블로그 게시판</h1>
     <form id="postForm">
       <input type="text" id="title" placeholder="제목" required />
-      <textarea id="content" placeholder="내용을 입력하세요..." rows="5" required></textarea>
+      <textarea id="content" placeholder="내용을 입력하세요 (마크다운 지원)..." rows="5" required></textarea>
       <button type="submit">게시하기</button>
     </form>
 
@@ -111,6 +111,50 @@
     const form = document.getElementById('postForm');
     const postsDiv = document.getElementById('posts');
 
+    function createMarkdownPost(post) {
+      const postEl = document.createElement('div');
+      postEl.className = 'post';
+
+      const titleEl = document.createElement('h3');
+      titleEl.textContent = post.title;
+
+      const contentEl = document.createElement('div');
+      contentEl.className = 'markdown';
+      contentEl.innerHTML = marked.parse(post.content);
+
+      const exportBtn = document.createElement('button');
+      exportBtn.textContent = '📥 .md로 저장';
+      exportBtn.style.marginTop = '10px';
+      exportBtn.onclick = () => {
+        const blob = new Blob([`# ${post.title}\n\n${post.content}`], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${post.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+
+      postEl.appendChild(titleEl);
+      postEl.appendChild(contentEl);
+      postEl.appendChild(exportBtn);
+
+      postsDiv.prepend(postEl);
+    }
+
+    function loadPosts() {
+      const saved = localStorage.getItem('markdownPosts');
+      if (saved) {
+        const posts = JSON.parse(saved);
+        postsDiv.innerHTML = '';
+        posts.forEach(createMarkdownPost);
+      }
+    }
+
+    loadPosts();
+
     form.addEventListener('submit', function (e) {
       e.preventDefault();
 
@@ -119,20 +163,13 @@
 
       if (!title || !content) return;
 
-      const post = document.createElement('div');
-      post.className = 'post';
+      const newPost = { title, content };
+      const saved = localStorage.getItem('markdownPosts');
+      const posts = saved ? JSON.parse(saved) : [];
+      posts.push(newPost);
+      localStorage.setItem('markdownPosts', JSON.stringify(posts));
 
-      const titleEl = document.createElement('h3');
-      titleEl.textContent = title;
-
-      const contentEl = document.createElement('p');
-      contentEl.textContent = content;
-
-      post.appendChild(titleEl);
-      post.appendChild(contentEl);
-
-      postsDiv.prepend(post);
-
+      createMarkdownPost(newPost);
       form.reset();
     });
   </script>

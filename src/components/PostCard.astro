@@ -1,0 +1,54 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import FormattedDate from './FormattedDate.astro';
+import { CATEGORY_LABELS } from '../consts';
+
+interface Props {
+	post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+---
+
+<li class="post-card">
+	<a href={`/blog/${post.id}/`}>
+		<span class="category-badge">{CATEGORY_LABELS[post.data.category]}</span>
+		<h3 class="title">{post.data.title}</h3>
+		<p class="date"><FormattedDate date={post.data.pubDate} /></p>
+		<p class="description">{post.data.description}</p>
+	</a>
+</li>
+
+<style>
+	.post-card {
+		background: var(--surface);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		transition: box-shadow 0.2s ease, transform 0.2s ease;
+	}
+	.post-card:hover {
+		box-shadow: 0 0 0 1px var(--accent), var(--box-shadow);
+		transform: translateY(-2px);
+	}
+	.post-card a {
+		display: block;
+		padding: 1.2em 1.4em;
+		color: inherit;
+	}
+	.post-card a:hover {
+		text-shadow: none;
+	}
+	.title {
+		margin: 0.5em 0 0.2em 0;
+		color: var(--text);
+	}
+	.date {
+		margin: 0 0 0.4em 0;
+		color: var(--text-muted);
+		font-size: 0.9em;
+	}
+	.description {
+		margin: 0;
+		color: var(--text-muted);
+	}
+</style>

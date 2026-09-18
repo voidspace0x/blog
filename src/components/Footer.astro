@@ -1,0 +1,32 @@
+---
+const today = new Date();
+---
+
+<footer>
+	&copy; {today.getFullYear()} VoidSpace0x. All rights reserved.
+	<div class="social-links">
+		<a href="https://github.com/VoidSpace0x" target="_blank">GitHub</a>
+		<a href="/rss.xml">RSS</a>
+	</div>
+</footer>
+<style>
+	footer {
+		padding: 2em 1em 6em 1em;
+		color: var(--text-muted);
+		text-align: center;
+		border-top: 1px solid var(--border);
+		margin-top: 2em;
+	}
+	.social-links {
+		display: flex;
+		justify-content: center;
+		gap: 1.5em;
+		margin-top: 0.8em;
+	}
+	.social-links a {
+		color: var(--text-muted);
+	}
+	.social-links a:hover {
+		color: var(--accent-2);
+	}
+</style>

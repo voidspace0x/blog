@@ -1,0 +1,35 @@
+---
+// TODO: replace these with your own values from https://giscus.app
+// after enabling Discussions on the GitHub repo and installing the giscus app.
+const repo = 'VoidSpace0x/blog';
+const repoId = 'REPLACE_ME';
+const category = 'Comments';
+const categoryId = 'REPLACE_ME';
+---
+
+<section class="giscus-wrap">
+	<script
+		is:inline
+		src="https://giscus.app/client.js"
+		data-repo={repo}
+		data-repo-id={repoId}
+		data-category={category}
+		data-category-id={categoryId}
+		data-mapping="pathname"
+		data-strict="0"
+		data-reactions-enabled="1"
+		data-emit-metadata="0"
+		data-input-position="bottom"
+		data-theme="transparent_dark"
+		data-lang="ko"
+		crossorigin="anonymous"
+		async></script>
+</section>
+
+<style>
+	.giscus-wrap {
+		margin-top: 3em;
+		padding-top: 2em;
+		border-top: 1px solid var(--border);
+	}
+</style>

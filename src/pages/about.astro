@@ -1,0 +1,31 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+---
+
+<!doctype html>
+<html lang="ko">
+	<head>
+		<BaseHead title="소개 | VoidSpace0x" description="VoidSpace0x 블로그 소개" />
+	</head>
+	<body>
+		<Header />
+		<main class="prose">
+			<h1>VoidSpace0x</h1>
+			<p>
+				공허(void) 속에 떠 있는 작은 기록 공간입니다. 개발하다가 든 생각, 종목을 보다가 든
+				생각, 그냥 든 생각을 가리지 않고 씁니다.
+			</p>
+			<ul>
+				<li><strong>잡담</strong> — 그때그때 드는 생각들</li>
+				<li><strong>개발</strong> — 만들면서 배운 것, 막혔다가 풀린 것</li>
+				<li><strong>주식</strong> — 보고 있는 종목, 복기</li>
+			</ul>
+			<p>
+				댓글은 <a href="https://github.com/VoidSpace0x">GitHub</a> 계정으로 남길 수 있습니다.
+			</p>
+		</main>
+		<Footer />
+	</body>
+</html>

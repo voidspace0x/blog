@@ -6,7 +6,7 @@ const today = new Date();
 	&copy; {today.getFullYear()} VoidSpace0x. All rights reserved.
 	<div class="social-links">
 		<a href="https://github.com/VoidSpace0x" target="_blank">GitHub</a>
-		<a href="/rss.xml">RSS</a>
+		<a href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/rss.xml`}>RSS</a>
 	</div>
 </footer>
 <style>

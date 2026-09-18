@@ -14,7 +14,7 @@ import Header from '../components/Header.astro';
 		<main class="not-found">
 			<h1>404</h1>
 			<p>이 페이지는 공허 속으로 사라졌습니다.</p>
-			<a href="/">홈으로 돌아가기</a>
+			<a href={import.meta.env.BASE_URL}>홈으로 돌아가기</a>
 		</main>
 		<Footer />
 		<style>

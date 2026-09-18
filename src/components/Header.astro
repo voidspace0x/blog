@@ -5,7 +5,12 @@ import HeaderLink from './HeaderLink.astro';
 
 <header>
 	<nav>
-		<h2><a href={import.meta.env.BASE_URL}>{SITE_TITLE}</a></h2>
+		<h2>
+			<a href={import.meta.env.BASE_URL}>
+				<span class="orbit-mark" aria-hidden="true"><span class="planet"></span></span>
+				{SITE_TITLE}
+			</a>
+		</h2>
 		<div class="internal-links">
 			<HeaderLink href="/">홈</HeaderLink>
 			<HeaderLink href="/category/chat">잡담</HeaderLink>
@@ -28,16 +33,30 @@ import HeaderLink from './HeaderLink.astro';
 </header>
 <style>
 	header {
+		position: relative;
 		margin: 0;
 		padding: 0 1em;
 		background: var(--surface);
 		border-bottom: 1px solid var(--border);
+	}
+	header::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: -1px;
+		height: 1px;
+		background: linear-gradient(90deg, transparent, var(--accent), var(--accent-2), transparent);
+		opacity: 0.6;
 	}
 	h2 {
 		margin: 0;
 		font-size: 1em;
 	}
 	h2 a {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5em;
 		color: var(--text);
 		text-decoration: none;
 		font-weight: 700;

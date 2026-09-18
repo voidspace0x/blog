@@ -4,22 +4,27 @@ import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import PostCard from '../components/PostCard.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import { SITE_DESCRIPTION } from '../consts';
 
-const posts = (await getCollection('blog', ({ data }) => import.meta.env.PROD ? !data.draft : true)).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
+const posts = (
+	await getCollection('blog', ({ data }) => (import.meta.env.PROD ? !data.draft : true))
+).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 ---
 
 <!doctype html>
 <html lang="ko">
 	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		<BaseHead title="VoidSpace0x" description={SITE_DESCRIPTION} />
 	</head>
 	<body>
 		<Header />
 		<main>
-			<p class="tagline">{SITE_DESCRIPTION}</p>
+			<section class="hero">
+				<span class="orbit-mark orbit-lg" aria-hidden="true"><span class="planet"></span></span>
+				<h1 class="hero-title">Void<span class="accent-grad">Space</span>0x</h1>
+				<p class="hero-prompt">&gt; 잡담 · 개발 · 주식</p>
+				<p class="tagline">{SITE_DESCRIPTION}</p>
+			</section>
 			{posts.length === 0 && <p>아직 글이 없습니다.</p>}
 			<ul class="post-list">
 				{posts.map((post) => <PostCard post={post} />)}
@@ -29,7 +34,7 @@ const posts = (await getCollection('blog', ({ data }) => import.meta.env.PROD ? 
 		<style>
 			.tagline {
 				color: var(--text-muted);
-				margin-bottom: 2em;
+				margin: 0;
 			}
 			.post-list {
 				list-style: none;

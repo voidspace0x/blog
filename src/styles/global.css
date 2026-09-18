@@ -6,8 +6,21 @@
 	--text-muted: #8b93a7;
 	--accent: #8b5cf6;
 	--accent-2: #22d3ee;
+	--cat-chat: #8b5cf6;
+	--cat-dev: #22d3ee;
+	--cat-stock: #34d399;
 	--box-shadow:
 		0 2px 6px rgba(0, 0, 0, 40%), 0 8px 24px rgba(0, 0, 0, 45%);
+}
+
+[data-category='chat'] {
+	--cat-color: var(--cat-chat);
+}
+[data-category='dev'] {
+	--cat-color: var(--cat-dev);
+}
+[data-category='stock'] {
+	--cat-color: var(--cat-stock);
 }
 
 * {
@@ -28,7 +41,19 @@ body {
 	line-height: 1.7;
 }
 
-/* Signature touch 1: CSS-only starfield, no JS */
+/* Signature touch 1a: distant nebula haze, fixed in the corners */
+body::after {
+	content: '';
+	position: fixed;
+	inset: 0;
+	z-index: -2;
+	pointer-events: none;
+	background:
+		radial-gradient(640px circle at 12% 15%, rgba(139, 92, 246, 12%), transparent 60%),
+		radial-gradient(560px circle at 88% 78%, rgba(34, 211, 238, 10%), transparent 60%);
+}
+
+/* Signature touch 1b: CSS-only twinkling starfield, no JS */
 body::before {
 	content: '';
 	position: fixed;
@@ -54,6 +79,63 @@ body::before {
 	}
 	to {
 		opacity: 0.9;
+	}
+}
+
+/* Signature touch 2: a small dot orbiting in the void — the site's mark */
+.orbit-mark {
+	display: inline-block;
+	position: relative;
+	width: 28px;
+	height: 28px;
+	vertical-align: middle;
+}
+.orbit-mark::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border: 1px solid var(--accent-2);
+	border-radius: 50%;
+	opacity: 0.4;
+}
+.orbit-mark .planet {
+	--orbit-radius: 11px;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 5px;
+	height: 5px;
+	margin: -2.5px 0 0 -2.5px;
+	border-radius: 50%;
+	background: var(--accent);
+	box-shadow: 0 0 6px var(--accent);
+	animation: orbit 5s linear infinite;
+}
+.orbit-mark.orbit-lg {
+	width: 56px;
+	height: 56px;
+}
+.orbit-mark.orbit-lg .planet {
+	--orbit-radius: 24px;
+	width: 8px;
+	height: 8px;
+	margin: -4px 0 0 -4px;
+	box-shadow: 0 0 10px var(--accent);
+	animation-duration: 6.5s;
+}
+@keyframes orbit {
+	from {
+		transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	body::before,
+	.orbit-mark .planet {
+		animation: none;
 	}
 }
 
@@ -96,7 +178,7 @@ b {
 	font-weight: 700;
 }
 
-/* Signature touch 2: glow on links */
+/* Signature touch 3: glow on links */
 a {
 	color: var(--accent-2);
 	text-decoration: none;
@@ -105,6 +187,64 @@ a {
 a:hover {
 	color: var(--accent);
 	text-shadow: 0 0 8px rgba(139, 92, 246, 60%);
+}
+
+/* In post body content, links sweep in a gradient underline on hover */
+.prose a {
+	background-image: linear-gradient(90deg, var(--accent), var(--accent-2));
+	background-repeat: no-repeat;
+	background-position: 0 100%;
+	background-size: 0% 1.5px;
+	padding-bottom: 2px;
+	transition: background-size 0.25s ease, color 0.2s ease, text-shadow 0.2s ease;
+}
+.prose a:hover {
+	background-size: 100% 1.5px;
+}
+
+/* Gradient text for hero-level headings */
+.accent-grad {
+	background: linear-gradient(90deg, var(--accent), var(--accent-2));
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+	filter: drop-shadow(0 0 18px rgba(139, 92, 246, 40%));
+}
+
+/* Signature touch 4: nebula-glow hero, used on the homepage */
+.hero {
+	position: relative;
+	text-align: center;
+	padding: 2.5em 1em 1.5em;
+	overflow: hidden;
+}
+.hero::before {
+	content: '';
+	position: absolute;
+	top: -220px;
+	left: 50%;
+	width: 560px;
+	height: 560px;
+	transform: translateX(-50%);
+	background: radial-gradient(
+		circle,
+		rgba(139, 92, 246, 35%) 0%,
+		rgba(34, 211, 238, 15%) 45%,
+		transparent 70%
+	);
+	filter: blur(40px);
+	pointer-events: none;
+	z-index: -1;
+}
+.hero-title {
+	font-size: 2.6em;
+	margin: 0.4em 0 0.2em;
+	letter-spacing: 0.02em;
+}
+.hero-prompt {
+	font-family: 'JetBrains Mono', ui-monospace, monospace;
+	color: var(--accent-2);
+	margin: 0 0 0.6em;
 }
 
 p {
@@ -191,7 +331,7 @@ hr {
 	font-weight: 600;
 	padding: 0.2em 0.7em;
 	border-radius: 999px;
-	background: rgba(34, 211, 238, 12%);
-	color: var(--accent-2);
-	border: 1px solid rgba(34, 211, 238, 35%);
+	background: color-mix(in srgb, var(--cat-color, var(--accent-2)) 14%, transparent);
+	color: var(--cat-color, var(--accent-2));
+	border: 1px solid color-mix(in srgb, var(--cat-color, var(--accent-2)) 40%, transparent);
 }

@@ -22,11 +22,14 @@ export function makeFilename(title, date = new Date()) {
 			year: 'numeric',
 			month: '2-digit',
 			day: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit',
+			hourCycle: 'h23',
 		})
 			.formatToParts(date)
 			.map(({ type, value }) => [type, value]),
 	);
-	return `${parts.year}-${parts.month}-${parts.day}-${slug}.md`;
+	return `${parts.year}-${parts.month}-${parts.day}-${parts.hour}${parts.minute}-${slug}.md`;
 }
 
 export function validatePost(post) {

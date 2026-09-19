@@ -51,7 +51,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 						<div class="filename-field">
 							<span>저장 파일 이름</span>
 							<output id="filename-preview" aria-live="polite">
-								YYYY-MM-DD-제목.md
+								YYYY-MM-DD-HHmm-제목.md
 							</output>
 						</div>
 					</div>
@@ -90,7 +90,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 						placeholder="## 첫 번째 이야기&#10;&#10;여기에 글을 써 주세요."
 					></textarea>
 					<p class="editor-tip">
-						파일 이름은 저장할 때의 한국 날짜와 제목에서 자동 생성됩니다. 글은
+						파일 이름은 저장할 때의 한국 날짜·시간과 제목에서 자동 생성됩니다. 글은
 						이 브라우저에 임시 저장됩니다. 이미지는 GitHub 저장소에 추가한 뒤
 						Markdown 경로로 연결하세요.
 					</p>

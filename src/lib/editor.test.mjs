@@ -33,7 +33,7 @@ test('reject invalid paths and missing content', () => {
 	assert.equal(makeSlug('한글 "제목"'), '한글-제목');
 	assert.equal(
 		makeFilename('한글 "제목"', new Date('2026-09-18T15:01:00Z')),
-		'2026-09-19-한글-제목.md',
+		'2026-09-19-0001-한글-제목.md',
 	);
 	assert.match(validatePost({ ...sample, title: '🎉' }), /파일 이름/);
 	assert.match(validatePost({ ...sample, body: '  ' }), /본문/);
@@ -53,7 +53,7 @@ test('publishing creates a new file in the intended repository and branch', asyn
 				json: async () => ({
 					content: {
 						html_url:
-							'https://github.com/voidspace0x/blog/blob/main/src/content/blog/2026-09-19-%ED%95%9C%EA%B8%80-%EC%A0%9C%EB%AA%A9.md',
+							'https://github.com/voidspace0x/blog/blob/main/src/content/blog/2026-09-19-0001-%ED%95%9C%EA%B8%80-%EC%A0%9C%EB%AA%A9.md',
 					},
 					commit: { sha: 'abc' },
 				}),
@@ -62,7 +62,7 @@ test('publishing creates a new file in the intended repository and branch', asyn
 	});
 	assert.equal(
 		request.url,
-		`https://api.github.com/repos/voidspace0x/blog/contents/src/content/blog/${encodeURIComponent('2026-09-19-한글-제목.md')}`,
+		`https://api.github.com/repos/voidspace0x/blog/contents/src/content/blog/${encodeURIComponent('2026-09-19-0001-한글-제목.md')}`,
 	);
 	assert.equal(JSON.parse(request.options.body).branch, 'main');
 	assert.equal(request.options.headers.Authorization, 'Bearer test-token');

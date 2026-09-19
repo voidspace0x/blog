@@ -1,5 +1,4 @@
 export const CATEGORIES = ['chat', 'dev', 'stock'];
-export const REPOSITORY = 'voidspace0x/blog';
 
 export function makeSlug(value) {
 	return value
@@ -54,56 +53,4 @@ export function serializePost(post) {
 	if (error) throw new Error(error);
 	// JSON strings are valid quoted YAML scalars. This also escapes quotes and newlines.
 	return `---\ntitle: ${JSON.stringify(post.title.trim())}\ndescription: ${JSON.stringify(post.description.trim())}\npubDate: ${post.pubDate}\ncategory: ${post.category}\ndraft: ${Boolean(post.draft)}\n---\n\n${post.body.trim()}\n`;
-}
-
-export function encodeUtf8Base64(value) {
-	const bytes = new TextEncoder().encode(value);
-	let binary = '';
-	for (let index = 0; index < bytes.length; index += 8192) {
-		binary += String.fromCharCode(...bytes.subarray(index, index + 8192));
-	}
-	return btoa(binary);
-}
-
-export async function createPost({
-	post,
-	token,
-	fetcher = fetch,
-	now = new Date(),
-}) {
-	const content = serializePost(post);
-	const filename = makeFilename(post.title, now);
-	const path = `src/content/blog/${encodeURIComponent(filename)}`;
-	const response = await fetcher(
-		`https://api.github.com/repos/${REPOSITORY}/contents/${path}`,
-		{
-			method: 'PUT',
-			headers: {
-				Accept: 'application/vnd.github+json',
-				Authorization: `Bearer ${token.trim()}`,
-				'Content-Type': 'application/json',
-				'X-GitHub-Api-Version': '2022-11-28',
-			},
-			body: JSON.stringify({
-				message: `${post.draft ? 'Draft' : 'Publish'}: ${post.title.trim()}`,
-				content: encodeUtf8Base64(content),
-				branch: 'main',
-			}),
-		},
-	);
-	if (response.status !== 201) {
-		if (response.status === 401 || response.status === 403)
-			throw new Error(
-				'GitHub 인증에 실패했습니다. 토큰의 만료일과 저장소 Contents 읽기·쓰기 권한을 확인해 주세요.',
-			);
-		if (response.status === 422 || response.status === 409)
-			throw new Error(
-				'같은 날짜와 제목의 글이 이미 있거나 저장소가 변경되었습니다. 제목을 확인해 주세요.',
-			);
-		throw new Error(
-			`GitHub에 저장하지 못했습니다. 상태 코드: ${response.status}`,
-		);
-	}
-	const result = await response.json();
-	return { url: result.content.html_url, sha: result.commit.sha };
 }

@@ -16,7 +16,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 		<meta name="robots" content="noindex, nofollow" />
 		<meta
 			http-equiv="Content-Security-Policy"
-			content="default-src 'self'; script-src 'self'; connect-src 'self' https://api.github.com; img-src 'self' https: data:; style-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self'; form-action 'none'"
+			content="default-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self' https: data:; style-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self'; form-action 'none'"
 		/>
 	</head>
 	<body>
@@ -28,7 +28,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 					<h1>
 						새 글 쓰기<span class="heading-dot">.</span>
 					</h1>
-					<p>글을 작성하고 미리 본 뒤 GitHub 저장소에 저장할 수 있습니다.</p>
+					<p>글을 작성하고 미리 본 뒤 Markdown 파일로 내려받으세요.</p>
 				</div>
 				<a href={`${base}/blog/`} class="text-link">
 					전체 글 보기 →
@@ -118,101 +118,24 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 						<label for="draft" class="draft-option">
 							<input id="draft" name="draft" type="checkbox" /> 초안으로 저장
 						</label>
-						<p>초안은 GitHub에 저장되지만 블로그에는 표시되지 않습니다.</p>
+						<p>초안으로 저장한 파일은 업로드해도 블로그에 표시되지 않습니다.</p>
 					</div>
 					<div class="publish-actions">
-						<button type="button" id="download" class="secondary-button">
-							.md 다운로드
-						</button>
-						<button type="button" id="publish" class="button">
-							GitHub에 게시 ↗
+						<button type="button" id="download" class="button">
+							Markdown 파일 다운로드
 						</button>
 					</div>
 				</div>
-				<section class="token-help" aria-label="GitHub 토큰 안내">
-					<div class="token-help-heading">
-						<strong>GitHub 토큰 안내</strong>
-						<a
-							href="https://github.com/settings/personal-access-tokens/new"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							토큰 생성 페이지 열기 ↗
-						</a>
-					</div>
-					<details class="token-guide">
-						<summary>
-							GitHub 토큰 생성·사용법 <span aria-hidden="true">↗</span>
-						</summary>
-						<ol>
-							<li>
-								위의 <strong>토큰 생성 페이지</strong>를 열고{' '}
-								<code>voidspace0x</code> 계정으로 로그인합니다.
-							</li>
-							<li>
-								<strong>Token name</strong>에 <code>Blog editor</code>처럼
-								알아볼 이름을 쓰고 필요한 기간만큼 <strong>Expiration</strong>을
-								설정합니다.
-							</li>
-							<li>
-								<strong>Resource owner</strong>는 <code>voidspace0x</code>,{' '}
-								<strong>Repository access</strong>는{' '}
-								<strong>Only select repositories</strong>를 선택한 뒤{' '}
-								<code>blog</code> 저장소만 고릅니다.
-							</li>
-							<li>
-								<strong>Repository permissions</strong>에서{' '}
-								<strong>Contents → Read and write</strong>를 지정한 뒤{' '}
-								<strong>Generate token</strong>을 누르고 표시된 토큰을
-								복사합니다.
-							</li>
-							<li>
-								글을 작성해 <strong>GitHub에 게시</strong> 또는{' '}
-								<strong>GitHub에 초안 저장</strong>을 누릅니다. 열린 칸에 토큰을
-								붙여 넣고 확인하면 <code>main</code> 브랜치의{' '}
-								<code>src/content/blog/</code>에 글이 저장됩니다. 공개 글은
-								GitHub Pages 배포가 끝나면 블로그에 나타납니다.
-							</li>
-						</ol>
-						<p>
-							토큰은 비밀번호처럼 관리하세요. 이 화면은 게시 요청에만 토큰을
-							사용하고 브라우저 저장소에는 보관하지 않습니다. 만료되었거나
-							권한이 없는 토큰은 GitHub에서 새로 발급해야 합니다.
-						</p>
-					</details>
+				<section class="upload-guide" aria-label="GitHub 업로드 방법">
+					<strong>블로그에 올리는 방법</strong>
+					<ol>
+						<li>위 버튼으로 <code>.md</code> 파일을 다운로드합니다.</li>
+						<li>
+							<a href="https://github.com/voidspace0x/blog/upload/main/src/content/blog" target="_blank" rel="noopener noreferrer">GitHub 글 업로드 화면 열기 ↗</a>에서 다운로드한 파일을 선택합니다. GitHub 로그인이 필요합니다.
+						</li>
+						<li><strong>Commit changes</strong>를 누르면 저장됩니다. 공개 글은 배포가 끝난 뒤 블로그에 나타납니다.</li>
+					</ol>
 				</section>
-				<div id="publish-dialog" class="publish-dialog" hidden>
-					<label for="token">
-						GitHub 토큰 <span class="field-hint">이 화면에서만 사용</span>
-					</label>
-					<input
-						id="token"
-						type="password"
-						autocomplete="off"
-						spellcheck="false"
-						placeholder="github_pat_..."
-					/>
-					<p>
-						<a
-							href="https://github.com/settings/personal-access-tokens/new"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							세분화된 토큰 만들기 ↗
-						</a>
-						에서 소유자 <code>voidspace0x</code>, 저장소 <code>blog</code>만
-						선택하고 <code>Contents: Read and write</code> 권한을 지정하세요.
-						토큰은 서버나 브라우저 저장소에 보관하지 않습니다.
-					</p>
-					<div class="publish-actions">
-						<button type="button" id="cancel" class="secondary-button">
-							취소
-						</button>
-						<button type="submit" id="confirm" class="button">
-							게시 확인
-						</button>
-					</div>
-				</div>
 				<p
 					id="editor-status"
 					class="editor-status"
@@ -226,10 +149,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 			import { marked } from 'marked';
 			import DOMPurify from 'dompurify';
 			import {
-				createPost,
 				makeFilename,
 				serializePost,
-				validatePost,
 			} from '../lib/editor.mjs';
 			import { CATEGORY_LABELS } from '../consts';
 
@@ -237,10 +158,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 			const form = get('post-form') as HTMLFormElement;
 			const title = get('title') as HTMLInputElement;
 			const draft = get('draft') as HTMLInputElement;
-			const dialog = get('publish-dialog');
-			const token = get('token') as HTMLInputElement;
 			const status = get('editor-status');
-			const confirm = get('confirm') as HTMLButtonElement;
 			const storageKey = 'voidspace0x-blog-editor-draft-v1';
 
 			function readPost() {
@@ -327,14 +245,6 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 			form.addEventListener('input', preview);
 			form.addEventListener('change', preview);
-			draft.addEventListener('change', () => {
-				get('publish').textContent = draft.checked
-					? 'GitHub에 초안 저장 ↗'
-					: 'GitHub에 게시 ↗';
-				confirm.textContent = draft.checked ? '초안 저장 확인' : '게시 확인';
-			});
-			draft.dispatchEvent(new Event('change'));
-
 			get('download').addEventListener('click', () => {
 				try {
 					const post = readPost();
@@ -348,67 +258,12 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 					anchor.download = makeFilename(post.title);
 					anchor.click();
 					setTimeout(() => URL.revokeObjectURL(url), 1000);
-					status.textContent = '마크다운 파일을 다운로드했습니다.';
+					status.textContent = 'Markdown 파일을 다운로드했습니다. 아래 링크에서 GitHub에 업로드해 주세요.';
 				} catch (error) {
 					status.textContent = (error as Error).message;
 				}
 			});
-			get('publish').addEventListener('click', () => {
-				const error = validatePost(readPost());
-				if (error) {
-					status.textContent = error;
-					return;
-				}
-				status.textContent = '';
-				dialog.hidden = false;
-				token.focus();
-			});
-			get('cancel').addEventListener('click', () => {
-				dialog.hidden = true;
-				token.value = '';
-			});
-			form.addEventListener('submit', async (event) => {
-				event.preventDefault();
-				if (!token.value.trim()) {
-					status.textContent = 'GitHub 토큰을 입력해 주세요.';
-					token.focus();
-					return;
-				}
-				const post = readPost();
-				const error = validatePost(post);
-				if (error) {
-					status.textContent = error;
-					return;
-				}
-				confirm.disabled = true;
-				status.textContent = 'GitHub에 저장하고 있습니다…';
-				try {
-					const result = await createPost({ post, token: token.value });
-					token.value = '';
-					dialog.hidden = true;
-					localStorage.removeItem(storageKey);
-					status.replaceChildren(
-						document.createTextNode(
-							post.draft
-								? '초안을 저장했습니다. '
-								: '글을 게시했습니다. GitHub Pages 배포 후 블로그에 표시됩니다. ',
-						),
-					);
-					const link = document.createElement('a');
-					link.href = result.url;
-					link.target = '_blank';
-					link.rel = 'noopener noreferrer';
-					link.textContent = 'GitHub에서 확인 ↗';
-					status.append(link);
-				} catch (error) {
-					status.textContent =
-						error instanceof TypeError
-							? 'GitHub 연결에 실패했습니다. 네트워크 상태를 확인해 주세요.'
-							: (error as Error).message;
-				} finally {
-					confirm.disabled = false;
-				}
-			});
+			form.addEventListener('submit', (event) => event.preventDefault());
 		</script>
 	</body>
 </html>
@@ -444,8 +299,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 	.editor-fields,
 	.editor-preview,
 	.editor-publish,
-	.token-help,
-	.publish-dialog {
+	.upload-guide {
 		background: var(--surface);
 		border: 1px solid var(--border);
 		border-radius: 12px;
@@ -455,8 +309,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 		display: grid;
 		gap: 18px;
 	}
-	.editor-fields label,
-	.publish-dialog label {
+	.editor-fields label {
 		display: block;
 		font-size: 14px;
 		font-weight: 650;
@@ -491,8 +344,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 	}
 	.editor-fields input,
 	.editor-fields select,
-	.editor-fields textarea,
-	.publish-dialog input {
+	.editor-fields textarea {
 		display: block;
 		width: 100%;
 		margin-top: 8px;
@@ -505,8 +357,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 	}
 	.editor-fields input:focus,
 	.editor-fields select:focus,
-	.editor-fields textarea:focus,
-	.publish-dialog input:focus {
+	.editor-fields textarea:focus {
 		border-color: var(--focus-ring);
 		box-shadow: 0 0 0 1px var(--focus-ring);
 	}
@@ -575,42 +426,20 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 		justify-content: space-between;
 		gap: 20px;
 	}
-	.token-help {
+	.upload-guide {
 		grid-column: 1 / -1;
-	}
-	.token-help-heading {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		flex-wrap: wrap;
-		gap: 8px;
+		color: var(--text-muted);
 		font-size: 14px;
 	}
-	.token-help-heading a {
-		font-size: 13px;
-	}
-	.token-guide {
-		margin-top: 12px;
-		color: var(--text-muted);
-		font-size: 13px;
-	}
-	.token-guide summary {
-		cursor: pointer;
+	.upload-guide strong {
 		color: var(--text);
-		min-height: 32px;
 	}
-	.token-guide ol {
+	.upload-guide ol {
 		padding-left: 24px;
-		margin: 12px 0;
+		margin: 12px 0 0;
 	}
-	.token-guide li {
-		margin-block: 10px;
-	}
-	.token-guide p {
-		margin: 16px 0 0;
-	}
-	.token-guide code {
-		white-space: normal;
+	.upload-guide li + li {
+		margin-top: 8px;
 	}
 	.draft-option {
 		display: flex;
@@ -633,41 +462,6 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 		display: flex;
 		gap: 12px;
 		flex-wrap: wrap;
-	}
-	.secondary-button {
-		border: 1px solid var(--border);
-		border-radius: 6px;
-		background: transparent;
-		color: var(--text);
-		padding: 9px 16px;
-		min-height: 44px;
-		cursor: pointer;
-	}
-	.editor-publish button,
-	.publish-dialog button {
-		cursor: pointer;
-	}
-	button:disabled {
-		opacity: 0.6;
-		cursor: wait;
-	}
-	.publish-dialog {
-		grid-column: 1 / -1;
-	}
-	.publish-dialog[hidden] {
-		display: none;
-	}
-	.publish-dialog input {
-		max-width: 540px;
-	}
-	.publish-dialog p {
-		color: var(--text-muted);
-		font-size: 13px;
-		line-height: 1.8;
-		margin: 14px 0 20px;
-	}
-	.publish-dialog code {
-		white-space: normal;
 	}
 	.editor-status {
 		grid-column: 1 / -1;
@@ -706,8 +500,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 		.editor-fields,
 		.editor-preview,
 		.editor-publish,
-		.token-help,
-		.publish-dialog {
+		.upload-guide {
 			padding: 20px;
 		}
 		.editor-publish {

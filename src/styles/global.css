@@ -539,6 +539,9 @@ textarea {
 	color: var(--text-muted);
 	min-height: 28px;
 }
+.footer-links .footer-editor-link {
+	color: #78869b;
+}
 .site-footer small {
 	font-family: 'JetBrains Mono', monospace;
 	font-size: 10px;

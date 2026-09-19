@@ -1,3 +1,5 @@
+import yaml from 'js-yaml';
+
 export const CATEGORIES = ['chat', 'dev', 'stock'];
 
 export function makeSlug(value) {
@@ -52,5 +54,39 @@ export function serializePost(post) {
 	const error = validatePost(post);
 	if (error) throw new Error(error);
 	// JSON strings are valid quoted YAML scalars. This also escapes quotes and newlines.
-	return `---\ntitle: ${JSON.stringify(post.title.trim())}\ndescription: ${JSON.stringify(post.description.trim())}\npubDate: ${post.pubDate}\ncategory: ${post.category}\ndraft: ${Boolean(post.draft)}\n---\n\n${post.body.trim()}\n`;
+	const extras = Object.fromEntries(
+		Object.entries(post.extraFrontmatter || {}).filter(
+			([key]) => !['title', 'description', 'pubDate', 'category', 'draft'].includes(key),
+		),
+	);
+	const extraYaml = Object.keys(extras).length ? yaml.dump(extras, { lineWidth: -1 }) : '';
+	return `---\ntitle: ${JSON.stringify(post.title.trim())}\ndescription: ${JSON.stringify(post.description.trim())}\npubDate: ${post.pubDate}\ncategory: ${post.category}\ndraft: ${Boolean(post.draft)}\n${extraYaml}---\n\n${post.body.trim()}\n`;
+}
+
+export function parsePost(markdown) {
+	const normalized = markdown.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
+	const match = normalized.match(/^---\n([\s\S]*?)\n---(?:\n|$)/);
+	if (!match) throw new Error('파일 맨 위에 YAML frontmatter(---)가 필요합니다.');
+	let data;
+	try {
+		data = yaml.load(match[1]);
+	} catch {
+		throw new Error('Markdown 파일의 YAML frontmatter를 읽을 수 없습니다.');
+	}
+	if (!data || typeof data !== 'object' || Array.isArray(data))
+		throw new Error('글 메타데이터 형식이 올바르지 않습니다.');
+	const date = data.pubDate instanceof Date
+		? data.pubDate.toISOString().slice(0, 10)
+		: String(data.pubDate ?? '').slice(0, 10);
+	const { title, description, category, draft, ...rest } = data;
+	delete rest.pubDate;
+	return {
+		title: typeof title === 'string' ? title : '',
+		description: typeof description === 'string' ? description : '',
+		pubDate: date,
+		category: CATEGORIES.includes(category) ? category : 'chat',
+		draft: draft === true,
+		body: normalized.slice(match[0].length).trim(),
+		extraFrontmatter: rest,
+	};
 }

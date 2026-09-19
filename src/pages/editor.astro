@@ -35,6 +35,19 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 				</a>
 			</div>
 			<form id="post-form" class="editor-layout">
+				<section class="draft-manager" aria-label="내 글 관리">
+					<div class="draft-picker">
+						<label for="draft-list">내 글</label>
+						<select id="draft-list" aria-label="저장된 글 선택"></select>
+					</div>
+					<div class="draft-actions">
+						<button type="button" id="new-post">새 글</button>
+						<button type="button" id="import-post">Markdown 불러오기</button>
+						<input id="import-file" type="file" accept=".md,.markdown,text/markdown,text/plain" hidden />
+						<button type="button" id="delete-post" class="delete-button">현재 글 삭제</button>
+					</div>
+					<p id="save-status" role="status" aria-live="polite">저장 상태 확인 중…</p>
+				</section>
 				<div class="editor-fields">
 					<div class="field-grid">
 						<label>
@@ -90,8 +103,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 						placeholder="## 첫 번째 이야기&#10;&#10;여기에 글을 써 주세요."
 					></textarea>
 					<p class="editor-tip">
-						파일 이름은 저장할 때의 한국 날짜·시간과 제목에서 자동 생성됩니다. 글은
-						이 브라우저에 임시 저장됩니다. 이미지는 GitHub 저장소에 추가한 뒤
+						파일 이름은 첫 다운로드 때 한국 날짜·시간과 제목으로 정해지고 이후 유지됩니다. 글은
+						이 브라우저에 자동 저장됩니다. 이미지는 GitHub 저장소에 추가한 뒤
 						Markdown 경로로 연결하세요.
 					</p>
 				</div>
@@ -116,9 +129,9 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 				<div class="editor-publish">
 					<div class="publish-copy">
 						<label for="draft" class="draft-option">
-							<input id="draft" name="draft" type="checkbox" /> 초안으로 저장
+							<input id="draft" name="draft" type="checkbox" /> 업로드 후 블로그에서 숨기기
 						</label>
-						<p>초안으로 저장한 파일은 업로드해도 블로그에 표시되지 않습니다.</p>
+						<p>체크하면 파일에 <code>draft: true</code>가 들어가며, GitHub에 업로드해도 블로그에 표시되지 않습니다.</p>
 					</div>
 					<div class="publish-actions">
 						<button type="button" id="download" class="button">
@@ -148,20 +161,43 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 		<script>
 			import { marked } from 'marked';
 			import DOMPurify from 'dompurify';
-			import {
-				makeFilename,
-				serializePost,
-			} from '../lib/editor.mjs';
+			import { makeFilename, parsePost, serializePost } from '../lib/editor.mjs';
 			import { CATEGORY_LABELS } from '../consts';
 
 			const get = (id: string) => document.getElementById(id) as HTMLElement;
 			const form = get('post-form') as HTMLFormElement;
-			const title = get('title') as HTMLInputElement;
 			const draft = get('draft') as HTMLInputElement;
+			const list = get('draft-list') as HTMLSelectElement;
+			const fileInput = get('import-file') as HTMLInputElement;
+			const saveStatus = get('save-status');
 			const status = get('editor-status');
-			const storageKey = 'voidspace0x-blog-editor-draft-v1';
+			const storageKey = 'voidspace0x-blog-editor-workspace-v2';
+			const oldStorageKey = 'voidspace0x-blog-editor-draft-v1';
+			type Post = {
+				title: string; description: string; category: string; pubDate: string;
+				body: string; draft: boolean; extraFrontmatter?: Record<string, unknown>;
+			};
+			type Draft = { id: string; post: Post; filename: string | null; updatedAt: string };
+			type Workspace = { activeId: string; drafts: Draft[] };
+			let workspace: Workspace;
+			let saveTimer: ReturnType<typeof setTimeout> | undefined;
+			let loading = false;
 
-			function readPost() {
+			function today() {
+				return new Intl.DateTimeFormat('en-CA', {
+					timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
+				}).format(new Date());
+			}
+			function emptyPost(): Post {
+				return { title: '', description: '', category: 'chat', pubDate: today(), body: '', draft: false };
+			}
+			function newDraft(post = emptyPost(), filename: string | null = null): Draft {
+				return { id: crypto.randomUUID(), post, filename, updatedAt: new Date().toISOString() };
+			}
+			function currentDraft() {
+				return workspace.drafts.find((item) => item.id === workspace.activeId)!;
+			}
+			function readPost(): Post {
 				const data = new FormData(form);
 				return {
 					title: String(data.get('title') ?? ''),
@@ -170,100 +206,157 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 					pubDate: String(data.get('pubDate') ?? ''),
 					body: String(data.get('body') ?? ''),
 					draft: draft.checked,
+					extraFrontmatter: currentDraft().post.extraFrontmatter,
 				};
 			}
-
+			function renderList() {
+				list.replaceChildren(...workspace.drafts
+					.slice().sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+					.map((item) => {
+						const option = new Option(item.post.title.trim() || '제목 없는 글', item.id);
+						return option;
+					}));
+				list.value = workspace.activeId;
+			}
 			function preview() {
 				const post = readPost();
 				try {
-					get('filename-preview').textContent = makeFilename(
-						post.title || '제목',
-					);
+					get('filename-preview').textContent = currentDraft().filename || makeFilename(post.title || '제목');
 				} catch {
-					get('filename-preview').textContent =
-						'제목에 글자나 숫자를 입력해 주세요.';
+					get('filename-preview').textContent = '제목에 글자나 숫자를 입력해 주세요.';
 				}
 				get('preview-title').textContent = post.title || '제목을 입력해 주세요';
-				get('preview-description').textContent =
-					post.description || '요약이 여기에 표시됩니다.';
-				get('preview-category').textContent =
-					CATEGORY_LABELS[post.category as keyof typeof CATEGORY_LABELS] ||
-					'잡담';
+				get('preview-description').textContent = post.description || '요약이 여기에 표시됩니다.';
+				get('preview-category').textContent = CATEGORY_LABELS[post.category as keyof typeof CATEGORY_LABELS] || '잡담';
 				get('preview-article').dataset.category = post.category;
-				const html = marked.parse(
-					post.body || '본문을 입력하면 미리보기가 표시됩니다.',
-					{ async: false },
-				) as string;
-				get('preview-body').innerHTML = DOMPurify.sanitize(html, {
-					FORBID_TAGS: ['iframe', 'form', 'style'],
+				const html = marked.parse(post.body || '본문을 입력하면 미리보기가 표시됩니다.', { async: false }) as string;
+				get('preview-body').innerHTML = DOMPurify.sanitize(html, { FORBID_TAGS: ['iframe', 'form', 'style'] });
+				get('preview-body').querySelectorAll('a').forEach((link) => {
+					link.target = '_blank'; link.rel = 'noopener noreferrer';
 				});
-				get('preview-body')
-					.querySelectorAll('a')
-					.forEach((link) => {
-						link.target = '_blank';
-						link.rel = 'noopener noreferrer';
-					});
+			}
+			function showDraft(item: Draft) {
+				loading = true;
+				for (const key of ['title', 'description', 'category', 'pubDate', 'body'] as const) {
+					const field = form.elements.namedItem(key) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+					field.value = item.post[key] || (key === 'pubDate' ? today() : '');
+				}
+				draft.checked = Boolean(item.post.draft);
+				workspace.activeId = item.id;
+				renderList();
+				preview();
+				loading = false;
+			}
+			function persist() {
 				try {
-					localStorage.setItem(storageKey, JSON.stringify(post));
+					localStorage.setItem(storageKey, JSON.stringify(workspace));
+					const time = new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit' }).format(new Date());
+					saveStatus.textContent = `이 브라우저에 저장됨 · ${time}`;
+					return true;
 				} catch {
-					/* private browsing */
+					saveStatus.textContent = '자동 저장 실패 · 브라우저 저장 공간을 확인하고 파일을 다운로드해 주세요.';
+					return false;
 				}
 			}
-
+			function saveCurrent() {
+				if (loading) return;
+				clearTimeout(saveTimer);
+				const item = currentDraft();
+				item.post = readPost();
+				item.updatedAt = new Date().toISOString();
+				persist();
+				renderList();
+			}
+			function queueSave() {
+				if (loading) return;
+				preview();
+				saveStatus.textContent = '저장 중…';
+				clearTimeout(saveTimer);
+				saveTimer = setTimeout(saveCurrent, 300);
+			}
 			try {
-				const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
-				if (saved) {
-					for (const key of [
-						'title',
-						'description',
-						'category',
-						'pubDate',
-						'body',
-					]) {
-						const field = form.elements.namedItem(key) as
-							HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
-						if (field && typeof saved[key] === 'string')
-							field.value = saved[key];
-					}
-					draft.checked = Boolean(saved.draft);
+				const stored = JSON.parse(localStorage.getItem(storageKey) || 'null');
+				if (stored && Array.isArray(stored.drafts) && stored.drafts.length) {
+					workspace = stored;
+				} else {
+					const old = JSON.parse(localStorage.getItem(oldStorageKey) || 'null');
+					const first = newDraft(old && typeof old === 'object' ? { ...emptyPost(), ...old } : emptyPost());
+					workspace = { activeId: first.id, drafts: [first] };
+					if (persist()) localStorage.removeItem(oldStorageKey);
 				}
 			} catch {
-				/* invalid local data */
+				const first = newDraft();
+				workspace = { activeId: first.id, drafts: [first] };
+				saveStatus.textContent = '브라우저 저장 데이터를 읽지 못했습니다. 파일로 백업해 주세요.';
 			}
-			if (!(get('pubDate') as HTMLInputElement).value) {
-				(get('pubDate') as HTMLInputElement).value = new Intl.DateTimeFormat(
-					'en-CA',
-					{
-						timeZone: 'Asia/Seoul',
-						year: 'numeric',
-						month: '2-digit',
-						day: '2-digit',
-					},
-				).format(new Date());
-			}
-			preview();
+			showDraft(workspace.drafts.find((item) => item.id === workspace.activeId) || workspace.drafts[0]);
+			if (saveStatus.textContent === '저장 상태 확인 중…') persist();
 
-			form.addEventListener('input', preview);
-			form.addEventListener('change', preview);
+			form.addEventListener('input', queueSave);
+			form.addEventListener('change', (event) => {
+				if (event.target !== list && event.target !== fileInput) queueSave();
+			});
+			list.addEventListener('change', () => {
+				const selectedId = list.value;
+				saveCurrent();
+				const next = workspace.drafts.find((item) => item.id === selectedId);
+				if (next) { showDraft(next); persist(); status.textContent = ''; }
+			});
+			get('new-post').addEventListener('click', () => {
+				saveCurrent();
+				const item = newDraft();
+				workspace.drafts.push(item);
+				showDraft(item);
+				persist();
+				status.textContent = '';
+				(get('title') as HTMLInputElement).focus();
+			});
+			get('delete-post').addEventListener('click', () => {
+				const item = currentDraft();
+				if (!confirm(`“${item.post.title || '제목 없는 글'}”을 이 브라우저에서 삭제할까요?`)) return;
+				clearTimeout(saveTimer);
+				workspace.drafts = workspace.drafts.filter((draft) => draft.id !== item.id);
+				if (!workspace.drafts.length) workspace.drafts.push(newDraft());
+				showDraft(workspace.drafts[0]);
+				persist();
+				status.textContent = '';
+			});
+			get('import-post').addEventListener('click', () => fileInput.click());
+			fileInput.addEventListener('change', async () => {
+				const file = fileInput.files?.[0];
+				fileInput.value = '';
+				if (!file) return;
+				try {
+					if (!/\.(md|markdown)$/i.test(file.name)) throw new Error('Markdown(.md) 파일을 선택해 주세요.');
+					if (file.size > 2_000_000) throw new Error('2MB 이하의 Markdown 파일만 불러올 수 있습니다.');
+					const post = parsePost(await file.text()) as Post;
+					saveCurrent();
+					const item = newDraft(post, file.name);
+					workspace.drafts.push(item);
+					showDraft(item);
+					persist();
+					status.textContent = `“${file.name}”을 새 글로 불러왔습니다.`;
+				} catch (error) { status.textContent = (error as Error).message; }
+			});
 			get('download').addEventListener('click', () => {
 				try {
 					const post = readPost();
-					const url = URL.createObjectURL(
-						new Blob([serializePost(post)], {
-							type: 'text/markdown;charset=utf-8',
-						}),
-					);
+					const content = serializePost(post);
+					const item = currentDraft();
+					if (!item.filename) item.filename = makeFilename(post.title);
+					const url = URL.createObjectURL(new Blob([content], { type: 'text/markdown;charset=utf-8' }));
 					const anchor = document.createElement('a');
 					anchor.href = url;
-					anchor.download = makeFilename(post.title);
+					anchor.download = item.filename;
 					anchor.click();
 					setTimeout(() => URL.revokeObjectURL(url), 1000);
+					saveCurrent();
+					preview();
 					status.textContent = 'Markdown 파일을 다운로드했습니다. 아래 링크에서 GitHub에 업로드해 주세요.';
-				} catch (error) {
-					status.textContent = (error as Error).message;
-				}
+				} catch (error) { status.textContent = (error as Error).message; }
 			});
 			form.addEventListener('submit', (event) => event.preventDefault());
+			window.addEventListener('pagehide', () => { if (saveTimer) saveCurrent(); });
 		</script>
 	</body>
 </html>
@@ -297,6 +390,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 		align-items: start;
 	}
 	.editor-fields,
+	.draft-manager,
 	.editor-preview,
 	.editor-publish,
 	.upload-guide {
@@ -304,6 +398,57 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 		border: 1px solid var(--border);
 		border-radius: 12px;
 		padding: 24px;
+	}
+	.draft-manager {
+		grid-column: 1 / -1;
+		display: flex;
+		align-items: end;
+		gap: 16px;
+		flex-wrap: wrap;
+	}
+	.draft-picker {
+		flex: 1 1 230px;
+	}
+	.draft-picker label {
+		display: block;
+		font-size: 13px;
+		font-weight: 650;
+		margin-bottom: 6px;
+	}
+	.draft-picker select {
+		width: 100%;
+		min-height: 42px;
+		padding: 8px 12px;
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		background: var(--bg);
+		color: var(--text);
+	}
+	.draft-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.draft-actions button {
+		min-height: 42px;
+		padding: 7px 12px;
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		background: var(--bg);
+		color: var(--text);
+		cursor: pointer;
+	}
+	.draft-actions button:hover {
+		border-color: var(--accent-2);
+	}
+	.draft-actions .delete-button {
+		color: var(--text-muted);
+	}
+	#save-status {
+		flex-basis: 100%;
+		font-size: 12px;
+		color: var(--text-muted);
+		margin: 0;
 	}
 	.editor-fields {
 		display: grid;
@@ -498,6 +643,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 			grid-template-columns: 1fr;
 		}
 		.editor-fields,
+		.draft-manager,
 		.editor-preview,
 		.editor-publish,
 		.upload-guide {

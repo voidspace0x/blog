@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
 	makeFilename,
 	makeSlug,
+	parsePost,
 	serializePost,
 	validatePost,
 } from './editor.mjs';
@@ -32,4 +33,16 @@ test('reject invalid paths and missing content', () => {
 	assert.match(validatePost({ ...sample, title: '🎉' }), /파일 이름/);
 	assert.match(validatePost({ ...sample, body: '  ' }), /본문/);
 	assert.match(validatePost({ ...sample, pubDate: '2026-02-30' }), /게시일/);
+});
+
+test('importing and downloading an existing post keeps its URL metadata', () => {
+	const imported = parsePost(`---\ntitle: '첫 글'\ndescription: '소개'\npubDate: 2026-09-19\ncategory: chat\nslug: welcome\n---\n\n## 본문\n`);
+	assert.equal(imported.pubDate, '2026-09-19');
+	assert.equal(imported.extraFrontmatter.slug, 'welcome');
+	assert.match(serializePost(imported), /slug: welcome/);
+	assert.match(serializePost(imported), /## 본문/);
+});
+
+test('a malformed Markdown frontmatter is rejected', () => {
+	assert.throws(() => parsePost('## 본문만 있음'), /frontmatter/);
 });

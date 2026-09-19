@@ -1,32 +1,25 @@
 ---
-const today = new Date();
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
-<footer>
-	&copy; {today.getFullYear()} VoidSpace0x. All rights reserved.
-	<div class="social-links">
-		<a href="https://github.com/VoidSpace0x" target="_blank">GitHub</a>
-		<a href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/rss.xml`}>RSS</a>
+<footer class="site-footer container">
+	<div>
+		<a class="footer-brand" href={`${base}/`}>
+			VoidSpace0x<span class="brand-dot">.</span>
+		</a>
+		<p>공허를 떠도는 기록들.</p>
+	</div>
+	<div class="footer-right">
+		<div class="footer-links">
+			<a
+				href="https://github.com/VoidSpace0x"
+				target="_blank"
+				rel="noopener noreferrer"
+			>
+				GitHub ↗<span class="sr-only"> (새 탭)</span>
+			</a>
+			<a href={`${base}/rss.xml`}>RSS ↗</a>
+		</div>
+		<small>© {new Date().getFullYear()} VoidSpace0x</small>
 	</div>
 </footer>
-<style>
-	footer {
-		padding: 2em 1em 6em 1em;
-		color: var(--text-muted);
-		text-align: center;
-		border-top: 1px solid var(--border);
-		margin-top: 2em;
-	}
-	.social-links {
-		display: flex;
-		justify-content: center;
-		gap: 1.5em;
-		margin-top: 0.8em;
-	}
-	.social-links a {
-		color: var(--text-muted);
-	}
-	.social-links a:hover {
-		color: var(--accent-2);
-	}
-</style>

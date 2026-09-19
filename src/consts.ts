@@ -11,3 +11,9 @@ export const CATEGORY_LABELS = {
 } as const;
 
 export type Category = keyof typeof CATEGORY_LABELS;
+
+export const CATEGORY_DESCRIPTIONS = {
+	chat: '그때그때 떠오른 생각과 일상의 작은 기록.',
+	dev: '만들면서 배운 것, 막혔다가 풀린 것.',
+	stock: '보고 있는 종목과 시장에 대한 생각, 그리고 복기.',
+} as const;

@@ -1,52 +1,66 @@
 ---
-import { getCollection } from 'astro:content';
 import BaseHead from '../../components/BaseHead.astro';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import PostCard from '../../components/PostCard.astro';
-import { CATEGORY_LABELS, SITE_TITLE, type Category } from '../../consts';
-
-export async function getStaticPaths() {
-	return (Object.keys(CATEGORY_LABELS) as Category[]).map((category) => ({
+import CategoryNav from '../../components/CategoryNav.astro';
+import {
+	CATEGORY_LABELS,
+	CATEGORY_DESCRIPTIONS,
+	type Category,
+} from '../../consts';
+import { getPosts } from '../../lib/posts';
+export function getStaticPaths() {
+	return Object.keys(CATEGORY_LABELS).map((category) => ({
 		params: { category },
 	}));
 }
-
 const { category } = Astro.params as { category: Category };
-const posts = (
-	await getCollection(
-		'blog',
-		({ data }) => data.category === category && (import.meta.env.PROD ? !data.draft : true),
-	)
-).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
-
-const label = CATEGORY_LABELS[category];
+const posts = await getPosts();
+const filtered = posts.filter((p) => p.data.category === category);
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
 <!doctype html>
 <html lang="ko">
 	<head>
-		<BaseHead title={`${label} | ${SITE_TITLE}`} description={`${label} 카테고리 글 목록`} />
+		<BaseHead
+			title={`${CATEGORY_LABELS[category]} | VoidSpace0x`}
+			description={CATEGORY_DESCRIPTIONS[category]}
+		/>
 	</head>
 	<body>
 		<Header />
-		<main>
-			<h1>{label}</h1>
-			{posts.length === 0 && <p>아직 글이 없습니다.</p>}
+		<main
+			id="main-content"
+			tabindex="-1"
+			class="container listing-page"
+			data-category={category}
+		>
+			<div class="page-heading">
+				<p class="eyebrow">
+					{category.toUpperCase()} / {String(filtered.length).padStart(2, '0')}{' '}
+					RECORDS
+				</p>
+				<h1>
+					{CATEGORY_LABELS[category]}
+					<span class="heading-dot">.</span>
+				</h1>
+				<p>{CATEGORY_DESCRIPTIONS[category]}</p>
+			</div>
+			<CategoryNav posts={posts} current={category} />
 			<ul class="post-list">
-				{posts.map((post) => <PostCard post={post} />)}
+				{filtered.map((post) => (
+					<PostCard post={post} />
+				))}
 			</ul>
+			{filtered.length === 0 && (
+				<div class="empty-state">
+					<p>아직 기록이 없습니다.</p>
+					<a href={`${base}/blog/`}>전체 글 보기 →</a>
+				</div>
+			)}
 		</main>
 		<Footer />
-		<style>
-			.post-list {
-				list-style: none;
-				margin: 0;
-				padding: 0;
-				display: flex;
-				flex-direction: column;
-				gap: 1em;
-			}
-		</style>
 	</body>
 </html>

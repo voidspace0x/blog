@@ -3,6 +3,8 @@
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import { defineConfig } from 'astro/config';
+import { satteri } from '@astrojs/markdown-satteri';
+import scrollableTables from './src/lib/scrollable-tables.mjs';
 
 // https://astro.build/config
 // NOTE: repo assumed to be named "blog" (github.com/VoidSpace0x/blog).
@@ -12,6 +14,7 @@ export default defineConfig({
 	base: '/blog',
 	integrations: [mdx(), sitemap()],
 	markdown: {
+		processor: satteri({ hastPlugins: [scrollableTables] }),
 		shikiConfig: {
 			theme: 'dracula',
 		},

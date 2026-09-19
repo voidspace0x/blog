@@ -2,54 +2,28 @@
 import type { CollectionEntry } from 'astro:content';
 import FormattedDate from './FormattedDate.astro';
 import { CATEGORY_LABELS } from '../consts';
-
 interface Props {
 	post: CollectionEntry<'blog'>;
+	heading?: 'h2' | 'h3';
 }
-
-const { post } = Astro.props;
+const { post, heading: Heading = 'h2' } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
 <li class="post-card" data-category={post.data.category}>
-	<a href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/blog/${post.id}/`}>
-		<span class="category-badge">{CATEGORY_LABELS[post.data.category]}</span>
-		<h3 class="title">{post.data.title}</h3>
-		<p class="date"><FormattedDate date={post.data.pubDate} /></p>
-		<p class="description">{post.data.description}</p>
+	<a href={`${base}/blog/${post.id}/`}>
+		<div class="post-meta">
+			<span class="category-badge">{CATEGORY_LABELS[post.data.category]}</span>
+			<span class="meta-dot" aria-hidden="true">
+				·
+			</span>
+			<FormattedDate date={post.data.pubDate} />
+			{post.data.draft && <span class="draft-badge">초안</span>}
+		</div>
+		<Heading class="post-title">{post.data.title}</Heading>
+		<p class="post-description">{post.data.description}</p>
+		<span class="post-arrow" aria-hidden="true">
+			↗
+		</span>
 	</a>
 </li>
-
-<style>
-	.post-card {
-		background: var(--surface);
-		border: 1px solid var(--border);
-		border-left: 3px solid var(--cat-color, var(--border));
-		border-radius: 10px;
-		transition: box-shadow 0.2s ease, transform 0.2s ease;
-	}
-	.post-card:hover {
-		box-shadow: 0 0 0 1px var(--cat-color, var(--accent)), var(--box-shadow);
-		transform: translateY(-2px);
-	}
-	.post-card a {
-		display: block;
-		padding: 1.2em 1.4em;
-		color: inherit;
-	}
-	.post-card a:hover {
-		text-shadow: none;
-	}
-	.title {
-		margin: 0.5em 0 0.2em 0;
-		color: var(--text);
-	}
-	.date {
-		margin: 0 0 0.4em 0;
-		color: var(--text-muted);
-		font-size: 0.9em;
-	}
-	.description {
-		margin: 0;
-		color: var(--text-muted);
-	}
-</style>

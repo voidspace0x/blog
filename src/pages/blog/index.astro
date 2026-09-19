@@ -1,39 +1,39 @@
 ---
-import { getCollection } from 'astro:content';
 import BaseHead from '../../components/BaseHead.astro';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import PostCard from '../../components/PostCard.astro';
-import { SITE_TITLE } from '../../consts';
-
-const posts = (await getCollection('blog', ({ data }) => import.meta.env.PROD ? !data.draft : true)).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
+import CategoryNav from '../../components/CategoryNav.astro';
+import { getPosts } from '../../lib/posts';
+const posts = await getPosts();
 ---
 
 <!doctype html>
 <html lang="ko">
 	<head>
-		<BaseHead title={`전체 글 | ${SITE_TITLE}`} description="전체 글 목록" />
+		<BaseHead
+			title="전체 글 | VoidSpace0x"
+			description="개발, 시장, 일상을 기록합니다."
+		/>
 	</head>
 	<body>
 		<Header />
-		<main>
-			<h1>전체 글</h1>
+		<main id="main-content" tabindex="-1" class="container listing-page">
+			<div class="page-heading">
+				<p class="eyebrow">THE ARCHIVE</p>
+				<h1>
+					전체 글<span class="heading-dot">.</span>
+				</h1>
+				<p>개발, 시장, 일상을 기록합니다.</p>
+			</div>
+			<CategoryNav posts={posts} />
 			<ul class="post-list">
-				{posts.map((post) => <PostCard post={post} />)}
+				{posts.map((post) => (
+					<PostCard post={post} />
+				))}
 			</ul>
+			{posts.length === 0 && <p class="empty-state">아직 기록이 없습니다.</p>}
 		</main>
 		<Footer />
-		<style>
-			.post-list {
-				list-style: none;
-				margin: 0;
-				padding: 0;
-				display: flex;
-				flex-direction: column;
-				gap: 1em;
-			}
-		</style>
 	</body>
 </html>

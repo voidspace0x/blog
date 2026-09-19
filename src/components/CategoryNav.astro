@@ -1,0 +1,36 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { CATEGORY_LABELS, type Category } from '../consts';
+interface Props {
+	posts: CollectionEntry<'blog'>[];
+	current?: Category;
+}
+const { posts, current } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<nav class="category-nav" aria-label="카테고리">
+	<a
+		href={`${base}/blog/`}
+		class:list={{ selected: !current }}
+		aria-current={
+			!current && Astro.url.pathname.replace(/\/$/, '') === `${base}/blog`
+				? 'page'
+				: undefined
+		}
+	>
+		전체 <span>{posts.length}</span>
+	</a>
+	{Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+		<a
+			href={`${base}/category/${key}/`}
+			data-category={key}
+			class:list={{ selected: current === key }}
+			aria-current={current === key ? 'page' : undefined}
+		>
+			<i aria-hidden="true"></i>
+			{label}
+			<span>{posts.filter((p) => p.data.category === key).length}</span>
+		</a>
+	))}
+</nav>

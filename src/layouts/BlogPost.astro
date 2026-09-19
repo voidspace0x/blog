@@ -1,88 +1,96 @@
 ---
 import { Image } from 'astro:assets';
+import type { MarkdownHeading } from 'astro';
 import type { CollectionEntry } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import Giscus from '../components/Giscus.astro';
 import Header from '../components/Header.astro';
+import PostCard from '../components/PostCard.astro';
+import TableOfContents from '../components/TableOfContents.astro';
 import { CATEGORY_LABELS } from '../consts';
-
-type Props = CollectionEntry<'blog'>['data'] & { showComments?: boolean };
-
-const { title, description, pubDate, updatedDate, heroImage, category, showComments = true } =
-	Astro.props;
+import { getPosts } from '../lib/posts';
+type Props = CollectionEntry<'blog'>['data'] & {
+	postId: string;
+	headings: MarkdownHeading[];
+	showComments?: boolean;
+};
+const {
+	title,
+	description,
+	pubDate,
+	updatedDate,
+	heroImage,
+	heroImageAlt = '',
+	category,
+	draft,
+	postId,
+	headings,
+	showComments = true,
+} = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const candidates = (await getPosts()).filter((p) => p.id !== postId);
+const sameCategory = candidates.filter((p) => p.data.category === category);
+const related = (sameCategory.length ? sameCategory : candidates).slice(0, 2);
 ---
 
+<!doctype html>
 <html lang="ko">
 	<head>
-		<BaseHead title={title} description={description} />
-		<style>
-			main {
-				width: calc(100% - 2em);
-				max-width: 100%;
-				margin: 0;
-			}
-			.hero-image {
-				width: 100%;
-			}
-			.hero-image img {
-				display: block;
-				margin: 0 auto;
-				border-radius: 12px;
-				box-shadow: var(--box-shadow);
-			}
-			.prose {
-				width: 720px;
-				max-width: calc(100% - 2em);
-				margin: auto;
-				padding: 1em;
-			}
-			.title {
-				margin-bottom: 1em;
-				padding: 1em 0;
-				text-align: center;
-				line-height: 1;
-			}
-			.title h1 {
-				margin: 0.5em 0;
-			}
-			.date {
-				margin-bottom: 0.5em;
-				color: var(--text-muted);
-			}
-			.last-updated-on {
-				font-style: italic;
-			}
-		</style>
+		<BaseHead title={`${title} | VoidSpace0x`} description={description} />
 	</head>
-
-	<body>
+	<body class="reading-page">
 		<Header />
-		<main>
+		<main id="main-content" tabindex="-1" class="reading-container">
 			<article data-category={category}>
-				<div class="hero-image">
-					{heroImage && <Image width={1020} height={510} src={heroImage} alt="" />}
-				</div>
-				<div class="prose">
-					<div class="title">
-						<div class="date">
-							{category && <span class="category-badge">{CATEGORY_LABELS[category]}</span>}
-							<FormattedDate date={pubDate} />
-							{
-								updatedDate && (
-									<div class="last-updated-on">
-										Last updated on <FormattedDate date={updatedDate} />
-									</div>
-								)
-							}
-						</div>
-						<h1>{title}</h1>
-						<hr />
+				<a class="back-link" href={`${base}/category/${category}/`}>
+					← {CATEGORY_LABELS[category]}의 다른 기록
+				</a>
+				<header class="article-heading">
+					<div class="post-meta">
+						<span class="category-badge">{CATEGORY_LABELS[category]}</span>
+						<span aria-hidden="true">·</span>
+						<FormattedDate date={pubDate} />
+						{draft && <span class="draft-badge">초안</span>}
 					</div>
+					<h1>{title}</h1>
+					<p class="article-description">{description}</p>
+					{updatedDate && (
+						<p class="updated-date">
+							수정 <FormattedDate date={updatedDate} />
+						</p>
+					)}
+				</header>
+				{heroImage && (
+					<div class="hero-image">
+						<Image src={heroImage} alt={heroImageAlt} width={1020} />
+					</div>
+				)}
+				<TableOfContents headings={headings} />
+				<div class="prose article-body">
 					<slot />
-					{showComments && <Giscus />}
 				</div>
+				<section class="related-posts" aria-labelledby="related-title">
+					<div class="section-heading">
+						<h2 id="related-title">다음 읽을 기록</h2>
+						<a class="text-link" href={`${base}/blog/`}>
+							전체 글 보기 →
+						</a>
+					</div>
+					<ul class="post-list">
+						{related.map((post) => (
+							<PostCard post={post} heading="h3" />
+						))}
+					</ul>
+				</section>
+				{showComments && (
+					<section class="comments-section" aria-labelledby="comments-title">
+						<h2 id="comments-title">댓글</h2>
+						<p>GitHub 계정으로 이야기를 남길 수 있습니다.</p>
+						<Giscus />
+					</section>
+				)}
 			</article>
 		</main>
 		<Footer />

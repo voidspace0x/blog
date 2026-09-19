@@ -2,29 +2,70 @@
 import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
+import { CATEGORY_LABELS, CATEGORY_DESCRIPTIONS } from '../consts';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
 <!doctype html>
 <html lang="ko">
 	<head>
-		<BaseHead title="소개 | VoidSpace0x" description="VoidSpace0x 블로그 소개" />
+		<BaseHead
+			title="소개 | VoidSpace0x"
+			description="공허 속에 떠 있는 작은 기록 공간, VoidSpace0x."
+		/>
 	</head>
 	<body>
 		<Header />
-		<main class="prose">
-			<h1>VoidSpace0x</h1>
-			<p>
-				공허(void) 속에 떠 있는 작은 기록 공간입니다. 개발하다가 든 생각, 종목을 보다가 든
-				생각, 그냥 든 생각을 가리지 않고 씁니다.
-			</p>
-			<ul>
-				<li><strong>잡담</strong> — 그때그때 드는 생각들</li>
-				<li><strong>개발</strong> — 만들면서 배운 것, 막혔다가 풀린 것</li>
-				<li><strong>주식</strong> — 보고 있는 종목, 복기</li>
-			</ul>
-			<p>
-				댓글은 <a href="https://github.com/VoidSpace0x">GitHub</a> 계정으로 남길 수 있습니다.
-			</p>
+		<main id="main-content" tabindex="-1" class="reading-container about-page">
+			<div class="page-heading">
+				<p class="eyebrow">ABOUT THIS SPACE</p>
+				<h1>
+					공허 속의
+					<br />
+					작은 기록 공간<span class="heading-dot">.</span>
+				</h1>
+			</div>
+			<div class="prose">
+				<p>
+					개발하다가 든 생각, 종목을 보다가 든 생각,
+					<br />
+					그냥 든 생각을 가리지 않고 씁니다.
+				</p>
+				<p>완성된 답보다, 그때의 생각과 배운 것을 남겨두는 공간입니다.</p>
+			</div>
+			<section class="about-topics" aria-labelledby="topics-title">
+				<h2 id="topics-title">이곳에 남기는 것들</h2>
+				{Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+					<a
+						class="about-topic"
+						data-category={key}
+						href={`${base}/category/${key}/`}
+					>
+						<span class="category-badge">{label}</span>
+						<span>
+							{CATEGORY_DESCRIPTIONS[key as keyof typeof CATEGORY_DESCRIPTIONS]}
+						</span>
+						<span aria-hidden="true">↗</span>
+					</a>
+				))}
+			</section>
+			<div class="about-contact">
+				<span class="orbit-mark" aria-hidden="true">
+					<span class="planet"></span>
+				</span>
+				<p>
+					함께 나누고 싶은 생각이 있다면
+					<br />글 아래 댓글이나{' '}
+					<a
+						href="https://github.com/VoidSpace0x"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						GitHub<span class="sr-only"> (새 탭)</span> ↗
+					</a>
+					에서 만나요.
+				</p>
+			</div>
 		</main>
 		<Footer />
 	</body>

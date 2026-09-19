@@ -1,0 +1,721 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<!doctype html>
+<html lang="ko">
+	<head>
+		<BaseHead
+			title="글쓰기 | VoidSpace0x"
+			description="VoidSpace0x 블로그 글쓰기"
+		/>
+		<meta name="robots" content="noindex, nofollow" />
+		<meta
+			http-equiv="Content-Security-Policy"
+			content="default-src 'self'; script-src 'self'; connect-src 'self' https://api.github.com; img-src 'self' https: data:; style-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self'; form-action 'none'"
+		/>
+	</head>
+	<body>
+		<Header />
+		<main id="main-content" tabindex="-1" class="container editor-page">
+			<div class="editor-heading">
+				<div>
+					<p class="eyebrow">NEW RECORD</p>
+					<h1>
+						새 글 쓰기<span class="heading-dot">.</span>
+					</h1>
+					<p>글을 작성하고 미리 본 뒤 GitHub 저장소에 저장할 수 있습니다.</p>
+				</div>
+				<a href={`${base}/blog/`} class="text-link">
+					전체 글 보기 →
+				</a>
+			</div>
+			<form id="post-form" class="editor-layout">
+				<div class="editor-fields">
+					<div class="field-grid">
+						<label>
+							제목{' '}
+							<input
+								id="title"
+								name="title"
+								type="text"
+								maxlength="160"
+								required
+								placeholder="글 제목"
+							/>
+						</label>
+						<div class="filename-field">
+							<span>저장 파일 이름</span>
+							<output id="filename-preview" aria-live="polite">
+								YYYY-MM-DD-제목.md
+							</output>
+						</div>
+					</div>
+					<label>
+						요약{' '}
+						<input
+							id="description"
+							name="description"
+							type="text"
+							maxlength="300"
+							required
+							placeholder="목록에 표시할 한두 문장"
+						/>
+					</label>
+					<div class="field-grid">
+						<label>
+							카테고리{' '}
+							<select id="category" name="category">
+								<option value="chat">잡담</option>
+								<option value="dev">개발</option>
+								<option value="stock">주식</option>
+							</select>
+						</label>
+						<label>
+							게시일 <input id="pubDate" name="pubDate" type="date" required />
+						</label>
+					</div>
+					<label class="body-label" for="body">
+						본문 <span class="field-hint">Markdown</span>
+					</label>
+					<textarea
+						id="body"
+						name="body"
+						rows="20"
+						required
+						placeholder="## 첫 번째 이야기&#10;&#10;여기에 글을 써 주세요."
+					></textarea>
+					<p class="editor-tip">
+						파일 이름은 저장할 때의 한국 날짜와 제목에서 자동 생성됩니다. 글은
+						이 브라우저에 임시 저장됩니다. 이미지는 GitHub 저장소에 추가한 뒤
+						Markdown 경로로 연결하세요.
+					</p>
+				</div>
+				<aside class="editor-preview" aria-label="글 미리보기">
+					<div class="preview-header">
+						<strong>미리보기</strong>
+						<span>PREVIEW</span>
+					</div>
+					<article id="preview-article" data-category="chat">
+						<p id="preview-category" class="category-badge">
+							잡담
+						</p>
+						<h2 id="preview-title">제목을 입력해 주세요</h2>
+						<p id="preview-description" class="preview-description">
+							요약이 여기에 표시됩니다.
+						</p>
+						<div id="preview-body" class="prose">
+							본문을 입력하면 미리보기가 표시됩니다.
+						</div>
+					</article>
+				</aside>
+				<div class="editor-publish">
+					<div class="publish-copy">
+						<label for="draft" class="draft-option">
+							<input id="draft" name="draft" type="checkbox" /> 초안으로 저장
+						</label>
+						<p>초안은 GitHub에 저장되지만 블로그에는 표시되지 않습니다.</p>
+					</div>
+					<div class="publish-actions">
+						<button type="button" id="download" class="secondary-button">
+							.md 다운로드
+						</button>
+						<button type="button" id="publish" class="button">
+							GitHub에 게시 ↗
+						</button>
+					</div>
+				</div>
+				<section class="token-help" aria-label="GitHub 토큰 안내">
+					<div class="token-help-heading">
+						<strong>GitHub 토큰 안내</strong>
+						<a
+							href="https://github.com/settings/personal-access-tokens/new"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							토큰 생성 페이지 열기 ↗
+						</a>
+					</div>
+					<details class="token-guide">
+						<summary>
+							GitHub 토큰 생성·사용법 <span aria-hidden="true">↗</span>
+						</summary>
+						<ol>
+							<li>
+								위의 <strong>토큰 생성 페이지</strong>를 열고{' '}
+								<code>voidspace0x</code> 계정으로 로그인합니다.
+							</li>
+							<li>
+								<strong>Token name</strong>에 <code>Blog editor</code>처럼
+								알아볼 이름을 쓰고 필요한 기간만큼 <strong>Expiration</strong>을
+								설정합니다.
+							</li>
+							<li>
+								<strong>Resource owner</strong>는 <code>voidspace0x</code>,{' '}
+								<strong>Repository access</strong>는{' '}
+								<strong>Only select repositories</strong>를 선택한 뒤{' '}
+								<code>blog</code> 저장소만 고릅니다.
+							</li>
+							<li>
+								<strong>Repository permissions</strong>에서{' '}
+								<strong>Contents → Read and write</strong>를 지정한 뒤{' '}
+								<strong>Generate token</strong>을 누르고 표시된 토큰을
+								복사합니다.
+							</li>
+							<li>
+								글을 작성해 <strong>GitHub에 게시</strong> 또는{' '}
+								<strong>GitHub에 초안 저장</strong>을 누릅니다. 열린 칸에 토큰을
+								붙여 넣고 확인하면 <code>main</code> 브랜치의{' '}
+								<code>src/content/blog/</code>에 글이 저장됩니다. 공개 글은
+								GitHub Pages 배포가 끝나면 블로그에 나타납니다.
+							</li>
+						</ol>
+						<p>
+							토큰은 비밀번호처럼 관리하세요. 이 화면은 게시 요청에만 토큰을
+							사용하고 브라우저 저장소에는 보관하지 않습니다. 만료되었거나
+							권한이 없는 토큰은 GitHub에서 새로 발급해야 합니다.
+						</p>
+					</details>
+				</section>
+				<div id="publish-dialog" class="publish-dialog" hidden>
+					<label for="token">
+						GitHub 토큰 <span class="field-hint">이 화면에서만 사용</span>
+					</label>
+					<input
+						id="token"
+						type="password"
+						autocomplete="off"
+						spellcheck="false"
+						placeholder="github_pat_..."
+					/>
+					<p>
+						<a
+							href="https://github.com/settings/personal-access-tokens/new"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							세분화된 토큰 만들기 ↗
+						</a>
+						에서 소유자 <code>voidspace0x</code>, 저장소 <code>blog</code>만
+						선택하고 <code>Contents: Read and write</code> 권한을 지정하세요.
+						토큰은 서버나 브라우저 저장소에 보관하지 않습니다.
+					</p>
+					<div class="publish-actions">
+						<button type="button" id="cancel" class="secondary-button">
+							취소
+						</button>
+						<button type="submit" id="confirm" class="button">
+							게시 확인
+						</button>
+					</div>
+				</div>
+				<p
+					id="editor-status"
+					class="editor-status"
+					role="status"
+					aria-live="polite"
+				></p>
+			</form>
+		</main>
+		<Footer />
+		<script>
+			import { marked } from 'marked';
+			import DOMPurify from 'dompurify';
+			import {
+				createPost,
+				makeFilename,
+				serializePost,
+				validatePost,
+			} from '../lib/editor.mjs';
+			import { CATEGORY_LABELS } from '../consts';
+
+			const get = (id: string) => document.getElementById(id) as HTMLElement;
+			const form = get('post-form') as HTMLFormElement;
+			const title = get('title') as HTMLInputElement;
+			const draft = get('draft') as HTMLInputElement;
+			const dialog = get('publish-dialog');
+			const token = get('token') as HTMLInputElement;
+			const status = get('editor-status');
+			const confirm = get('confirm') as HTMLButtonElement;
+			const storageKey = 'voidspace0x-blog-editor-draft-v1';
+
+			function readPost() {
+				const data = new FormData(form);
+				return {
+					title: String(data.get('title') ?? ''),
+					description: String(data.get('description') ?? ''),
+					category: String(data.get('category') ?? ''),
+					pubDate: String(data.get('pubDate') ?? ''),
+					body: String(data.get('body') ?? ''),
+					draft: draft.checked,
+				};
+			}
+
+			function preview() {
+				const post = readPost();
+				try {
+					get('filename-preview').textContent = makeFilename(
+						post.title || '제목',
+					);
+				} catch {
+					get('filename-preview').textContent =
+						'제목에 글자나 숫자를 입력해 주세요.';
+				}
+				get('preview-title').textContent = post.title || '제목을 입력해 주세요';
+				get('preview-description').textContent =
+					post.description || '요약이 여기에 표시됩니다.';
+				get('preview-category').textContent =
+					CATEGORY_LABELS[post.category as keyof typeof CATEGORY_LABELS] ||
+					'잡담';
+				get('preview-article').dataset.category = post.category;
+				const html = marked.parse(
+					post.body || '본문을 입력하면 미리보기가 표시됩니다.',
+					{ async: false },
+				) as string;
+				get('preview-body').innerHTML = DOMPurify.sanitize(html, {
+					FORBID_TAGS: ['iframe', 'form', 'style'],
+				});
+				get('preview-body')
+					.querySelectorAll('a')
+					.forEach((link) => {
+						link.target = '_blank';
+						link.rel = 'noopener noreferrer';
+					});
+				try {
+					localStorage.setItem(storageKey, JSON.stringify(post));
+				} catch {
+					/* private browsing */
+				}
+			}
+
+			try {
+				const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+				if (saved) {
+					for (const key of [
+						'title',
+						'description',
+						'category',
+						'pubDate',
+						'body',
+					]) {
+						const field = form.elements.namedItem(key) as
+							HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
+						if (field && typeof saved[key] === 'string')
+							field.value = saved[key];
+					}
+					draft.checked = Boolean(saved.draft);
+				}
+			} catch {
+				/* invalid local data */
+			}
+			if (!(get('pubDate') as HTMLInputElement).value) {
+				(get('pubDate') as HTMLInputElement).value = new Intl.DateTimeFormat(
+					'en-CA',
+					{
+						timeZone: 'Asia/Seoul',
+						year: 'numeric',
+						month: '2-digit',
+						day: '2-digit',
+					},
+				).format(new Date());
+			}
+			preview();
+
+			form.addEventListener('input', preview);
+			form.addEventListener('change', preview);
+			draft.addEventListener('change', () => {
+				get('publish').textContent = draft.checked
+					? 'GitHub에 초안 저장 ↗'
+					: 'GitHub에 게시 ↗';
+				confirm.textContent = draft.checked ? '초안 저장 확인' : '게시 확인';
+			});
+			draft.dispatchEvent(new Event('change'));
+
+			get('download').addEventListener('click', () => {
+				try {
+					const post = readPost();
+					const url = URL.createObjectURL(
+						new Blob([serializePost(post)], {
+							type: 'text/markdown;charset=utf-8',
+						}),
+					);
+					const anchor = document.createElement('a');
+					anchor.href = url;
+					anchor.download = makeFilename(post.title);
+					anchor.click();
+					setTimeout(() => URL.revokeObjectURL(url), 1000);
+					status.textContent = '마크다운 파일을 다운로드했습니다.';
+				} catch (error) {
+					status.textContent = (error as Error).message;
+				}
+			});
+			get('publish').addEventListener('click', () => {
+				const error = validatePost(readPost());
+				if (error) {
+					status.textContent = error;
+					return;
+				}
+				status.textContent = '';
+				dialog.hidden = false;
+				token.focus();
+			});
+			get('cancel').addEventListener('click', () => {
+				dialog.hidden = true;
+				token.value = '';
+			});
+			form.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				if (!token.value.trim()) {
+					status.textContent = 'GitHub 토큰을 입력해 주세요.';
+					token.focus();
+					return;
+				}
+				const post = readPost();
+				const error = validatePost(post);
+				if (error) {
+					status.textContent = error;
+					return;
+				}
+				confirm.disabled = true;
+				status.textContent = 'GitHub에 저장하고 있습니다…';
+				try {
+					const result = await createPost({ post, token: token.value });
+					token.value = '';
+					dialog.hidden = true;
+					localStorage.removeItem(storageKey);
+					status.replaceChildren(
+						document.createTextNode(
+							post.draft
+								? '초안을 저장했습니다. '
+								: '글을 게시했습니다. GitHub Pages 배포 후 블로그에 표시됩니다. ',
+						),
+					);
+					const link = document.createElement('a');
+					link.href = result.url;
+					link.target = '_blank';
+					link.rel = 'noopener noreferrer';
+					link.textContent = 'GitHub에서 확인 ↗';
+					status.append(link);
+				} catch (error) {
+					status.textContent =
+						error instanceof TypeError
+							? 'GitHub 연결에 실패했습니다. 네트워크 상태를 확인해 주세요.'
+							: (error as Error).message;
+				} finally {
+					confirm.disabled = false;
+				}
+			});
+		</script>
+	</body>
+</html>
+
+<style>
+	.editor-page {
+		padding-block: 56px 72px;
+	}
+	.editor-heading {
+		display: flex;
+		align-items: end;
+		justify-content: space-between;
+		gap: 20px;
+		margin-bottom: 32px;
+	}
+	.editor-heading .eyebrow {
+		margin-bottom: 12px;
+	}
+	.editor-heading h1 {
+		font-size: 36px;
+		margin-bottom: 10px;
+	}
+	.editor-heading p:last-child {
+		color: var(--text-muted);
+		margin: 0;
+	}
+	.editor-layout {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		gap: 24px;
+		align-items: start;
+	}
+	.editor-fields,
+	.editor-preview,
+	.editor-publish,
+	.token-help,
+	.publish-dialog {
+		background: var(--surface);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		padding: 24px;
+	}
+	.editor-fields {
+		display: grid;
+		gap: 18px;
+	}
+	.editor-fields label,
+	.publish-dialog label {
+		display: block;
+		font-size: 14px;
+		font-weight: 650;
+	}
+	.field-hint {
+		color: var(--text-muted);
+		font-size: 12px;
+		font-weight: 400;
+	}
+	.filename-field {
+		min-width: 0;
+		font-size: 14px;
+		font-weight: 650;
+	}
+	.filename-field output {
+		display: block;
+		margin-top: 8px;
+		padding: 10px 12px;
+		min-height: 45px;
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		background: var(--bg);
+		color: var(--text-muted);
+		font-size: 13px;
+		font-weight: 400;
+		overflow-wrap: anywhere;
+	}
+	.field-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 16px;
+	}
+	.editor-fields input,
+	.editor-fields select,
+	.editor-fields textarea,
+	.publish-dialog input {
+		display: block;
+		width: 100%;
+		margin-top: 8px;
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		background: var(--bg);
+		color: var(--text);
+		padding: 10px 12px;
+		outline: none;
+	}
+	.editor-fields input:focus,
+	.editor-fields select:focus,
+	.editor-fields textarea:focus,
+	.publish-dialog input:focus {
+		border-color: var(--focus-ring);
+		box-shadow: 0 0 0 1px var(--focus-ring);
+	}
+	.editor-fields textarea {
+		min-height: 400px;
+		resize: vertical;
+		font-family: 'JetBrains Mono', monospace;
+		font-size: 14px;
+		line-height: 1.7;
+		tab-size: 2;
+	}
+	.editor-tip {
+		color: var(--text-muted);
+		font-size: 12px;
+		margin: 0;
+	}
+	.editor-preview {
+		position: sticky;
+		top: 20px;
+		max-height: min(80vh, 900px);
+		overflow: auto;
+	}
+	.preview-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		border-bottom: 1px solid var(--border);
+		padding-bottom: 16px;
+		margin-bottom: 24px;
+		font-size: 14px;
+	}
+	.preview-header span {
+		color: var(--text-muted);
+		font-family: 'JetBrains Mono', monospace;
+		font-size: 10px;
+		letter-spacing: 0.12em;
+	}
+	.editor-preview h2 {
+		font-size: 28px;
+		margin: 16px 0 10px;
+	}
+	.preview-description {
+		color: var(--text-muted);
+		border-bottom: 1px solid var(--border);
+		padding-bottom: 20px;
+	}
+	.editor-preview .prose {
+		font-size: 16px;
+		overflow-wrap: anywhere;
+	}
+	.editor-preview .prose :global(h2) {
+		font-size: 22px;
+	}
+	.editor-preview .prose :global(h3) {
+		font-size: 19px;
+	}
+	.editor-preview .prose :global(pre),
+	.editor-preview .prose :global(table) {
+		max-width: 100%;
+		overflow-x: auto;
+	}
+	.editor-publish {
+		grid-column: 1 / -1;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 20px;
+	}
+	.token-help {
+		grid-column: 1 / -1;
+	}
+	.token-help-heading {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 8px;
+		font-size: 14px;
+	}
+	.token-help-heading a {
+		font-size: 13px;
+	}
+	.token-guide {
+		margin-top: 12px;
+		color: var(--text-muted);
+		font-size: 13px;
+	}
+	.token-guide summary {
+		cursor: pointer;
+		color: var(--text);
+		min-height: 32px;
+	}
+	.token-guide ol {
+		padding-left: 24px;
+		margin: 12px 0;
+	}
+	.token-guide li {
+		margin-block: 10px;
+	}
+	.token-guide p {
+		margin: 16px 0 0;
+	}
+	.token-guide code {
+		white-space: normal;
+	}
+	.draft-option {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		font-weight: 650;
+		cursor: pointer;
+	}
+	.draft-option input {
+		width: 18px;
+		height: 18px;
+		accent-color: var(--accent-2);
+	}
+	.publish-copy p {
+		margin: 4px 0 0;
+		color: var(--text-muted);
+		font-size: 12px;
+	}
+	.publish-actions {
+		display: flex;
+		gap: 12px;
+		flex-wrap: wrap;
+	}
+	.secondary-button {
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		background: transparent;
+		color: var(--text);
+		padding: 9px 16px;
+		min-height: 44px;
+		cursor: pointer;
+	}
+	.editor-publish button,
+	.publish-dialog button {
+		cursor: pointer;
+	}
+	button:disabled {
+		opacity: 0.6;
+		cursor: wait;
+	}
+	.publish-dialog {
+		grid-column: 1 / -1;
+	}
+	.publish-dialog[hidden] {
+		display: none;
+	}
+	.publish-dialog input {
+		max-width: 540px;
+	}
+	.publish-dialog p {
+		color: var(--text-muted);
+		font-size: 13px;
+		line-height: 1.8;
+		margin: 14px 0 20px;
+	}
+	.publish-dialog code {
+		white-space: normal;
+	}
+	.editor-status {
+		grid-column: 1 / -1;
+		margin: 0;
+		color: var(--accent-2);
+		font-size: 14px;
+	}
+	.editor-status:empty {
+		display: none;
+	}
+	@media (max-width: 840px) {
+		.editor-layout {
+			grid-template-columns: 1fr;
+		}
+		.editor-preview {
+			position: static;
+			max-height: 450px;
+		}
+		.editor-heading {
+			align-items: start;
+		}
+	}
+	@media (max-width: 600px) {
+		.editor-page {
+			padding-block: 32px 48px;
+		}
+		.editor-heading {
+			display: block;
+		}
+		.editor-heading h1 {
+			font-size: 28px;
+		}
+		.field-grid {
+			grid-template-columns: 1fr;
+		}
+		.editor-fields,
+		.editor-preview,
+		.editor-publish,
+		.token-help,
+		.publish-dialog {
+			padding: 20px;
+		}
+		.editor-publish {
+			align-items: stretch;
+			flex-direction: column;
+		}
+		.publish-actions > button {
+			flex: 1;
+		}
+	}
+</style>

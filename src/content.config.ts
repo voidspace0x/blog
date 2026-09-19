@@ -15,6 +15,10 @@ const blog = defineCollection({
 			updatedDate: z.coerce.date().optional(),
 			heroImage: z.optional(image()),
 			heroImageAlt: z.string().optional(),
+			slug: z
+				.string()
+				.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+				.optional(),
 			category: z.enum(['chat', 'dev', 'stock']),
 			draft: z.boolean().default(false),
 		}),

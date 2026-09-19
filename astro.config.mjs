@@ -12,7 +12,10 @@ import scrollableTables from './src/lib/scrollable-tables.mjs';
 export default defineConfig({
 	site: 'https://voidspace0x.github.io',
 	base: '/blog',
-	integrations: [mdx(), sitemap()],
+	integrations: [
+		mdx(),
+		sitemap({ filter: (page) => !page.endsWith('/editor/') }),
+	],
 	markdown: {
 		processor: satteri({ hastPlugins: [scrollableTables] }),
 		shikiConfig: {

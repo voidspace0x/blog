@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "test:editor": "node --test src/lib/editor.test.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },
@@ -17,6 +18,8 @@
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.4",
     "astro": "^7.3.3",
+    "dompurify": "^3.4.15",
+    "marked": "^18.0.13",
     "sharp": "^0.35.0"
   },
   "allowScripts": {

@@ -33,14 +33,19 @@ export function makeFilename(title, date = new Date()) {
 	return `${parts.year}-${parts.month}-${parts.day}-${parts.hour}${parts.minute}-${slug}.md`;
 }
 
-export function makeImageMarkdown(filename, base = '/blog') {
+export function makeImageMarkdown(filename, altText = '') {
 	if (!filename || /[\\/\u0000-\u001f]/.test(filename))
 		throw new Error('그림 파일 이름을 확인해 주세요.');
-	const alt = filename
-		.replace(/\.[^.]+$/, '')
-		.replace(/[-_]+/g, ' ')
+	const alt = (altText.trim() || filename.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' '))
 		.replace(/[\\[\]]/g, '\\$&');
-	return `![${alt}](${base.replace(/\/$/, '')}/images/${encodeURIComponent(filename)})`;
+	return `![${alt}](./${encodeURIComponent(filename)})`;
+}
+
+export function makeImageFilename(articleFilename, originalFilename) {
+	const extension = originalFilename.match(/\.(png|jpe?g|webp|gif|avif|svg)$/i)?.[1]?.toLowerCase();
+	if (!extension) throw new Error('PNG, JPG, WebP, GIF, AVIF, SVG 그림만 넣을 수 있습니다.');
+	const name = makeSlug(originalFilename.replace(/\.[^.]+$/, '')) || 'image';
+	return `${articleFilename.replace(/\.md$/i, '')}-${name}.${extension}`;
 }
 
 export function validatePost(post) {

@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
 	makeFilename,
 	makeImageMarkdown,
+	makeImageFilename,
 	makeSlug,
 	parsePost,
 	serializePost,
@@ -48,10 +49,12 @@ test('a malformed Markdown frontmatter is rejected', () => {
 	assert.throws(() => parsePost('## 본문만 있음'), /frontmatter/);
 });
 
-test('image markup keeps the Pages base path and encodes filenames', () => {
+test('image markup uses a relative path and encodes filenames', () => {
 	assert.equal(
-		makeImageMarkdown('우주 사진 1.png', '/blog'),
-		'![우주 사진 1](/blog/images/%EC%9A%B0%EC%A3%BC%20%EC%82%AC%EC%A7%84%201.png)',
+		makeImageMarkdown('우주 사진 1.png'),
+		'![우주 사진 1](./%EC%9A%B0%EC%A3%BC%20%EC%82%AC%EC%A7%84%201.png)',
 	);
+	assert.equal(makeImageFilename('2026-09-20-0945-테스트.md', '우주 사진.png'), '2026-09-20-0945-테스트-우주-사진.png');
+	assert.equal(makeImageMarkdown('image.png', '푸른 [지구]'), '![푸른 \\[지구\\]](./image.png)');
 	assert.throws(() => makeImageMarkdown('../outside.png'), /파일 이름/);
 });

@@ -207,7 +207,7 @@ textarea {
 	display: grid;
 	grid-template-columns: 7fr 3fr;
 	align-items: center;
-	padding: 64px 0 60px;
+	padding: 40px 0 36px;
 	gap: 32px;
 	border-bottom: 1px solid var(--border);
 }
@@ -228,7 +228,7 @@ textarea {
 	background: var(--accent-2);
 }
 .hero h1 {
-	font-size: 44px;
+	font-size: 40px;
 	line-height: 1.28;
 	font-weight: 750;
 }
@@ -236,7 +236,7 @@ textarea {
 	color: var(--accent);
 }
 .hero-description {
-	margin: 24px 0 28px;
+	margin: 16px 0 20px;
 	color: var(--text-muted);
 	font-size: 17px;
 	line-height: 1.8;
@@ -471,6 +471,10 @@ textarea {
 	-webkit-box-orient: vertical;
 	overflow: hidden;
 }
+.reading-time {
+	color: var(--text-muted);
+	font-size: 12px;
+}
 .post-arrow {
 	position: absolute;
 	right: 26px;
@@ -588,6 +592,18 @@ textarea {
 }
 .prose p {
 	margin: 0 0 24px;
+}
+.prose img {
+	display: block;
+	max-width: 100%;
+	height: auto;
+	border-radius: 8px;
+}
+.prose p:has(> img:only-child) + p:has(> em:only-child) {
+	margin-top: -16px;
+	color: var(--text-muted);
+	font-size: 13px;
+	line-height: 1.6;
 }
 .prose h2 {
 	font-size: 28px;

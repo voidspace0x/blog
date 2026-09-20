@@ -7,10 +7,10 @@ const { headings } = Astro.props;
 const items = headings.filter((h) => h.depth === 2);
 ---
 
-{items.length >= 4 && (
+{items.length >= 2 && (
 	<details class="table-of-contents">
 		<summary>
-			이 글의 내용 <span>{items.length}개의 이야기</span>
+			목차 <span>{items.length}개 항목</span>
 		</summary>
 		<nav aria-label="목차">
 			<ol>

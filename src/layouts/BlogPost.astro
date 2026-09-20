@@ -15,6 +15,7 @@ type Props = CollectionEntry<'blog'>['data'] & {
 	postId: string;
 	headings: MarkdownHeading[];
 	showComments?: boolean;
+	readingTime?: number | null;
 };
 const {
 	title,
@@ -28,6 +29,7 @@ const {
 	postId,
 	headings,
 	showComments = true,
+	readingTime,
 } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const candidates = (await getPosts()).filter((p) => p.id !== postId);
@@ -52,6 +54,7 @@ const related = (sameCategory.length ? sameCategory : candidates).slice(0, 2);
 						<span class="category-badge">{CATEGORY_LABELS[category]}</span>
 						<span aria-hidden="true">·</span>
 						<FormattedDate date={pubDate} />
+						{readingTime && <span class="reading-time">· 약 {readingTime}분 읽기</span>}
 						{draft && <span class="draft-badge">초안</span>}
 					</div>
 					<h1>{title}</h1>

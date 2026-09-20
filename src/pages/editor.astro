@@ -28,7 +28,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 					<h1>
 						새 글 쓰기<span class="heading-dot">.</span>
 					</h1>
-					<p>글을 작성하고 미리 본 뒤 Markdown 파일로 내려받으세요.</p>
+					<p>글을 작성하고 그림과 함께 내려받아 GitHub에 올리세요.</p>
 				</div>
 				<a href={`${base}/blog/`} class="text-link">
 					전체 글 보기 →
@@ -97,8 +97,10 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 					</label>
 					<div class="body-toolbar">
 						<button type="button" id="insert-image">그림 삽입</button>
+						<button type="button" id="insert-template">카테고리 글 틀</button>
 						<input id="image-file" type="file" accept="image/*" hidden />
-						<span>커서 위치에 그림을 넣습니다.</span>
+						<input id="image-alt" type="text" placeholder="그림 대체 텍스트" aria-label="그림 대체 텍스트" maxlength="180" />
+						<span>그림 아래에 <code>*설명 · 출처: ...*</code>를 적으면 캡션으로 표시됩니다.</span>
 					</div>
 					<textarea
 						id="body"
@@ -108,8 +110,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 						placeholder="## 첫 번째 이야기&#10;&#10;여기에 글을 써 주세요."
 					></textarea>
 					<p class="editor-tip">
-						파일 이름은 첫 다운로드 때 한국 날짜·시간과 제목으로 정해지고 이후 유지됩니다. 글은
-						이 브라우저에 자동 저장됩니다. 그림 파일은 글 파일과 별도로 GitHub에 업로드해야 합니다.
+						파일 이름은 첫 다운로드 또는 그림 삽입 때 한국 날짜·시간과 제목으로 정해지고 이후 유지됩니다.
+						글과 그림은 이 브라우저에 자동 저장됩니다.
 					</p>
 				</div>
 				<aside class="editor-preview" aria-label="글 미리보기">
@@ -139,24 +141,22 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 					</div>
 					<div class="publish-actions">
 						<button type="button" id="download" class="button">
-							Markdown 파일 다운로드
+							게시 파일 다운로드
 						</button>
 					</div>
 				</div>
 				<section class="upload-guide" aria-label="GitHub 업로드 방법">
 					<strong>블로그에 올리는 방법</strong>
 					<ol>
-						<li>그림을 넣었다면 <a href="https://github.com/voidspace0x/blog/upload/main/public/images" target="_blank" rel="noopener noreferrer">GitHub 그림 업로드 화면 ↗</a>에 선택한 원본 그림 파일을 먼저 올립니다.</li>
-						<li>위 버튼으로 <code>.md</code> 파일을 다운로드합니다.</li>
-						<li>
-							<a href="https://github.com/voidspace0x/blog/upload/main/src/content/blog" target="_blank" rel="noopener noreferrer">GitHub 글 업로드 화면 열기 ↗</a>에서 다운로드한 파일을 선택합니다. GitHub 로그인이 필요합니다.
-						</li>
+						<li>제목·요약·본문과 그림의 대체 텍스트·출처를 확인한 뒤 게시 파일을 다운로드합니다. 이 에디터에서 삽입한 그림이 있으면 ZIP으로 묶입니다.</li>
+						<li>ZIP은 압축을 풀고, 안의 <code>.md</code>와 그림을 모두 선택합니다.</li>
+						<li><a href="https://github.com/voidspace0x/blog/upload/main/src/content/blog" target="_blank" rel="noopener noreferrer">GitHub 글 업로드 화면 열기 ↗</a>에 파일을 함께 올립니다. GitHub 로그인이 필요합니다.</li>
 						<li><strong>Commit changes</strong>를 누르면 저장됩니다. 공개 글은 배포가 끝난 뒤 블로그에 나타납니다.</li>
 					</ol>
 					<div id="image-upload-list" class="image-upload-list" hidden>
-						<strong>이 글에 선택한 그림 파일</strong>
+						<strong>이 글과 함께 저장할 그림 파일</strong>
 						<ul id="image-file-list"></ul>
-						<p>원본 그림 파일을 위 그림 업로드 화면에 같은 이름으로 올려주세요. 업로드 전 그림 미리보기는 이 탭을 닫으면 사라집니다.</p>
+						<p>그림을 수정하거나 본문에서 삭제했다면 게시 파일을 다시 내려받아 주세요.</p>
 					</div>
 				</section>
 				<p
@@ -171,7 +171,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 		<script>
 			import { marked } from 'marked';
 			import DOMPurify from 'dompurify';
-			import { makeFilename, makeImageMarkdown, parsePost, serializePost } from '../lib/editor.mjs';
+			import { makeFilename, makeImageFilename, makeImageMarkdown, parsePost, serializePost } from '../lib/editor.mjs';
+			import { createZip } from '../lib/zip.mjs';
 			import { CATEGORY_LABELS } from '../consts';
 
 			const get = (id: string) => document.getElementById(id) as HTMLElement;
@@ -195,6 +196,39 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 			let saveTimer: ReturnType<typeof setTimeout> | undefined;
 			let loading = false;
 			const imagePreviews = new Map<string, Map<string, string>>();
+			const imageAssets = new Map<string, Map<string, File>>();
+			function storedImage(id: string, name: string, file?: File | null): Promise<File | undefined> {
+				return new Promise((resolve, reject) => {
+					const open = indexedDB.open('voidspace0x-blog-editor-images', 1);
+					open.onupgradeneeded = () => open.result.createObjectStore('files');
+					open.onerror = () => reject(open.error);
+					open.onsuccess = () => {
+						const db = open.result;
+						const transaction = db.transaction('files', file === undefined ? 'readonly' : 'readwrite');
+						const store = transaction.objectStore('files');
+						const request = file === undefined ? store.get(`${id}:${name}`) : file === null ? store.delete(`${id}:${name}`) : store.put(file, `${id}:${name}`);
+						request.onsuccess = () => resolve(request.result as File | undefined);
+						request.onerror = () => reject(request.error);
+						transaction.oncomplete = () => db.close();
+					};
+				});
+			}
+			async function restoreImages(item: Draft) {
+				const assets = imageAssets.get(item.id) || new Map<string, File>();
+				const previews = imagePreviews.get(item.id) || new Map<string, string>();
+				for (const name of item.imageFiles || []) {
+					if (assets.has(name)) continue;
+					try {
+						const file = await storedImage(item.id, name);
+						if (!file) continue;
+						assets.set(name, file);
+						previews.set(`./${encodeURIComponent(name)}`, URL.createObjectURL(file));
+					} catch { /* Older drafts may not have locally stored images. */ }
+				}
+				imageAssets.set(item.id, assets);
+				imagePreviews.set(item.id, previews);
+				if (workspace.activeId === item.id) preview();
+			}
 
 			function today() {
 				return new Intl.DateTimeFormat('en-CA', {
@@ -232,7 +266,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 				list.value = workspace.activeId;
 			}
 			function renderImageList() {
-				const files = currentDraft().imageFiles || [];
+				const files = (currentDraft().imageFiles || []).filter((name) => bodyField.value.includes(`./${encodeURIComponent(name)}`));
 				get('image-upload-list').hidden = files.length === 0;
 				get('image-file-list').replaceChildren(...files.map((name) => {
 					const item = document.createElement('li');
@@ -255,8 +289,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 				get('preview-body').innerHTML = DOMPurify.sanitize(html, { FORBID_TAGS: ['iframe', 'form', 'style'] });
 				const localImages = imagePreviews.get(workspace.activeId);
 				get('preview-body').querySelectorAll('img').forEach((img) => {
-					const path = new URL(img.getAttribute('src') || '', location.href).pathname;
-					const localUrl = localImages?.get(path);
+					const source = img.getAttribute('src') || '';
+					const localUrl = localImages?.get(source) || localImages?.get(new URL(source, location.href).pathname);
 					if (localUrl) img.src = localUrl;
 				});
 				get('preview-body').querySelectorAll('a').forEach((link) => {
@@ -275,6 +309,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 				renderImageList();
 				preview();
 				loading = false;
+				void restoreImages(item);
 			}
 			function persist() {
 				try {
@@ -299,6 +334,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 			function queueSave() {
 				if (loading) return;
 				preview();
+				renderImageList();
 				saveStatus.textContent = '저장 중…';
 				clearTimeout(saveTimer);
 				saveTimer = setTimeout(saveCurrent, 300);
@@ -346,6 +382,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 				clearTimeout(saveTimer);
 				imagePreviews.get(item.id)?.forEach((url) => URL.revokeObjectURL(url));
 				imagePreviews.delete(item.id);
+				imageAssets.delete(item.id);
+				for (const name of item.imageFiles || []) void storedImage(item.id, name, null).catch(() => {});
 				workspace.drafts = workspace.drafts.filter((draft) => draft.id !== item.id);
 				if (!workspace.drafts.length) workspace.drafts.push(newDraft());
 				showDraft(workspace.drafts[0]);
@@ -353,22 +391,48 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 				status.textContent = '';
 			});
 			get('import-post').addEventListener('click', () => fileInput.click());
-			get('insert-image').addEventListener('click', () => imageInput.click());
-			imageInput.addEventListener('change', () => {
+			get('insert-image').addEventListener('click', () => {
+				const altField = get('image-alt') as HTMLInputElement;
+				if (!altField.value.trim()) { status.textContent = '그림 대체 텍스트를 먼저 입력해 주세요.'; altField.focus(); return; }
+				imageInput.click();
+			});
+			get('insert-template').addEventListener('click', () => {
+				if (bodyField.value.trim()) { status.textContent = '본문이 비어 있는 새 글에서 글 틀을 넣을 수 있습니다.'; return; }
+				const templates: Record<string, string> = {
+					chat: '## 이야기\n\n\n\n## 남겨둘 생각\n\n',
+					dev: '## 먼저 요약\n\n\n\n## 문제와 맥락\n\n\n\n## 해결 과정\n\n\n\n## 결과와 배운 점\n\n',
+					stock: '## 핵심 요약\n\n\n\n## 근거\n\n\n\n## 위험 요인\n\n\n\n## 관찰할 지표\n\n',
+				};
+				bodyField.value = templates[(get('category') as HTMLSelectElement).value];
+				bodyField.dispatchEvent(new Event('input', { bubbles: true }));
+				bodyField.focus();
+			});
+			imageInput.addEventListener('change', async () => {
 				const file = imageInput.files?.[0];
 				imageInput.value = '';
 				if (!file) return;
 				try {
 					if (!file.type.startsWith('image/')) throw new Error('그림 파일을 선택해 주세요.');
-					const markup = makeImageMarkdown(file.name, import.meta.env.BASE_URL);
-					const path = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/images/${encodeURIComponent(file.name)}`;
 					const item = currentDraft();
+					const altText = (get('image-alt') as HTMLInputElement).value.trim();
+					if (!altText) throw new Error('그림을 설명하는 대체 텍스트를 먼저 입력해 주세요.');
+					if (!item.filename) item.filename = makeFilename(readPost().title);
+					const originalName = makeImageFilename(item.filename, file.name);
+					let name = originalName;
+					let suffix = 2;
+					while (item.imageFiles?.includes(name)) name = originalName.replace(/(\.[^.]+)$/, `-${suffix++}$1`);
+					const markup = makeImageMarkdown(name, altText);
+					const path = `./${encodeURIComponent(name)}`;
 					const images = imagePreviews.get(item.id) || new Map<string, string>();
 					const previous = images.get(path);
 					if (previous) URL.revokeObjectURL(previous);
 					images.set(path, URL.createObjectURL(file));
 					imagePreviews.set(item.id, images);
-					item.imageFiles = [...new Set([...(item.imageFiles || []), file.name])];
+					const assets = imageAssets.get(item.id) || new Map<string, File>();
+					assets.set(name, file);
+					imageAssets.set(item.id, assets);
+					item.imageFiles = [...new Set([...(item.imageFiles || []), name])];
+					const imageSave = storedImage(item.id, name, file).then(() => true, () => false);
 					const start = bodyField.selectionStart;
 					const end = bodyField.selectionEnd;
 					const before = bodyField.value.slice(0, start);
@@ -381,7 +445,11 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 					bodyField.setSelectionRange(start + prefix.length, start + prefix.length + markup.length);
 					bodyField.dispatchEvent(new Event('input', { bubbles: true }));
 					renderImageList();
-					status.textContent = `“${file.name}”을 본문에 넣었습니다. GitHub 그림 폴더에도 원본 파일을 올려주세요.`;
+					const imageSaved = await imageSave;
+					(get('image-alt') as HTMLInputElement).value = '';
+					status.textContent = imageSaved
+						? `“${file.name}”을 넣었습니다. 그림 설명과 출처를 본문에 적어주세요.`
+						: '그림을 브라우저에 저장하지 못했습니다. 이 탭에서 바로 게시 파일을 다운로드해 주세요.';
 				} catch (error) { status.textContent = (error as Error).message; }
 			});
 			fileInput.addEventListener('change', async () => {
@@ -400,21 +468,34 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 					status.textContent = `“${file.name}”을 새 글로 불러왔습니다.`;
 				} catch (error) { status.textContent = (error as Error).message; }
 			});
-			get('download').addEventListener('click', () => {
+			get('download').addEventListener('click', async () => {
 				try {
 					const post = readPost();
 					const content = serializePost(post);
+					if (/!\[\s*\]\(/.test(post.body)) throw new Error('그림의 대체 텍스트를 입력해 주세요.');
 					const item = currentDraft();
-					if (!item.filename) item.filename = makeFilename(post.title);
-					const url = URL.createObjectURL(new Blob([content], { type: 'text/markdown;charset=utf-8' }));
+					const filename = item.filename || makeFilename(post.title);
+					const matches = [...post.body.matchAll(/!\[[^\]]*\]\(\.\/([^\s)]+)\)/g)];
+					const names = [...new Set(matches.map((match) => decodeURIComponent(match[1])))];
+					const files: { name: string; data: string | Uint8Array }[] = [{ name: filename, data: content }];
+					for (const name of names) {
+						let image = imageAssets.get(item.id)?.get(name);
+						if (!image) image = await storedImage(item.id, name).catch(() => undefined);
+						if (!image) throw new Error(`“${name}” 그림 파일이 없습니다. 그림을 다시 삽입해 주세요.`);
+						files.push({ name, data: new Uint8Array(await image.arrayBuffer()) });
+					}
+					const bundled = files.length > 1;
+					const blob = bundled ? createZip(files) : new Blob([content], { type: 'text/markdown;charset=utf-8' });
+					const url = URL.createObjectURL(blob);
 					const anchor = document.createElement('a');
 					anchor.href = url;
-					anchor.download = item.filename;
+					anchor.download = bundled ? filename.replace(/\.md$/i, '.zip') : filename;
 					anchor.click();
 					setTimeout(() => URL.revokeObjectURL(url), 1000);
+					item.filename = filename;
 					saveCurrent();
 					preview();
-					status.textContent = 'Markdown 파일을 다운로드했습니다. 아래 링크에서 GitHub에 업로드해 주세요.';
+					status.textContent = bundled ? '글과 그림을 묶어 다운로드했습니다. 압축을 풀고 모든 파일을 GitHub에 올려주세요.' : 'Markdown 파일을 다운로드했습니다. GitHub에 올려주세요.';
 				} catch (error) { status.textContent = (error as Error).message; }
 			});
 			form.addEventListener('submit', (event) => event.preventDefault());
@@ -596,6 +677,10 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 	}
 	.body-toolbar button:hover {
 		border-color: var(--accent-2);
+	}
+	.body-toolbar #image-alt {
+		width: min(100%, 230px);
+		margin-top: 0;
 	}
 	.body-toolbar span {
 		color: var(--text-muted);

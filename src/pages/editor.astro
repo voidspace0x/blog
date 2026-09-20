@@ -16,7 +16,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 		<meta name="robots" content="noindex, nofollow" />
 		<meta
 			http-equiv="Content-Security-Policy"
-			content="default-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self' https: data:; style-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self'; form-action 'none'"
+			content="default-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self' https: data: blob:; style-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self'; form-action 'none'"
 		/>
 	</head>
 	<body>
@@ -95,6 +95,11 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 					<label class="body-label" for="body">
 						본문 <span class="field-hint">Markdown</span>
 					</label>
+					<div class="body-toolbar">
+						<button type="button" id="insert-image">그림 삽입</button>
+						<input id="image-file" type="file" accept="image/*" hidden />
+						<span>커서 위치에 그림을 넣습니다.</span>
+					</div>
 					<textarea
 						id="body"
 						name="body"
@@ -104,8 +109,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 					></textarea>
 					<p class="editor-tip">
 						파일 이름은 첫 다운로드 때 한국 날짜·시간과 제목으로 정해지고 이후 유지됩니다. 글은
-						이 브라우저에 자동 저장됩니다. 이미지는 GitHub 저장소에 추가한 뒤
-						Markdown 경로로 연결하세요.
+						이 브라우저에 자동 저장됩니다. 그림 파일은 글 파일과 별도로 GitHub에 업로드해야 합니다.
 					</p>
 				</div>
 				<aside class="editor-preview" aria-label="글 미리보기">
@@ -142,12 +146,18 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 				<section class="upload-guide" aria-label="GitHub 업로드 방법">
 					<strong>블로그에 올리는 방법</strong>
 					<ol>
+						<li>그림을 넣었다면 <a href="https://github.com/voidspace0x/blog/upload/main/public/images" target="_blank" rel="noopener noreferrer">GitHub 그림 업로드 화면 ↗</a>에 선택한 원본 그림 파일을 먼저 올립니다.</li>
 						<li>위 버튼으로 <code>.md</code> 파일을 다운로드합니다.</li>
 						<li>
 							<a href="https://github.com/voidspace0x/blog/upload/main/src/content/blog" target="_blank" rel="noopener noreferrer">GitHub 글 업로드 화면 열기 ↗</a>에서 다운로드한 파일을 선택합니다. GitHub 로그인이 필요합니다.
 						</li>
 						<li><strong>Commit changes</strong>를 누르면 저장됩니다. 공개 글은 배포가 끝난 뒤 블로그에 나타납니다.</li>
 					</ol>
+					<div id="image-upload-list" class="image-upload-list" hidden>
+						<strong>이 글에 선택한 그림 파일</strong>
+						<ul id="image-file-list"></ul>
+						<p>원본 그림 파일을 위 그림 업로드 화면에 같은 이름으로 올려주세요. 업로드 전 그림 미리보기는 이 탭을 닫으면 사라집니다.</p>
+					</div>
 				</section>
 				<p
 					id="editor-status"
@@ -161,7 +171,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 		<script>
 			import { marked } from 'marked';
 			import DOMPurify from 'dompurify';
-			import { makeFilename, parsePost, serializePost } from '../lib/editor.mjs';
+			import { makeFilename, makeImageMarkdown, parsePost, serializePost } from '../lib/editor.mjs';
 			import { CATEGORY_LABELS } from '../consts';
 
 			const get = (id: string) => document.getElementById(id) as HTMLElement;
@@ -169,6 +179,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 			const draft = get('draft') as HTMLInputElement;
 			const list = get('draft-list') as HTMLSelectElement;
 			const fileInput = get('import-file') as HTMLInputElement;
+			const imageInput = get('image-file') as HTMLInputElement;
+			const bodyField = get('body') as HTMLTextAreaElement;
 			const saveStatus = get('save-status');
 			const status = get('editor-status');
 			const storageKey = 'voidspace0x-blog-editor-workspace-v2';
@@ -177,11 +189,12 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 				title: string; description: string; category: string; pubDate: string;
 				body: string; draft: boolean; extraFrontmatter?: Record<string, unknown>;
 			};
-			type Draft = { id: string; post: Post; filename: string | null; updatedAt: string };
+			type Draft = { id: string; post: Post; filename: string | null; updatedAt: string; imageFiles?: string[] };
 			type Workspace = { activeId: string; drafts: Draft[] };
 			let workspace: Workspace;
 			let saveTimer: ReturnType<typeof setTimeout> | undefined;
 			let loading = false;
+			const imagePreviews = new Map<string, Map<string, string>>();
 
 			function today() {
 				return new Intl.DateTimeFormat('en-CA', {
@@ -192,7 +205,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 				return { title: '', description: '', category: 'chat', pubDate: today(), body: '', draft: false };
 			}
 			function newDraft(post = emptyPost(), filename: string | null = null): Draft {
-				return { id: crypto.randomUUID(), post, filename, updatedAt: new Date().toISOString() };
+				return { id: crypto.randomUUID(), post, filename, updatedAt: new Date().toISOString(), imageFiles: [] };
 			}
 			function currentDraft() {
 				return workspace.drafts.find((item) => item.id === workspace.activeId)!;
@@ -218,6 +231,15 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 					}));
 				list.value = workspace.activeId;
 			}
+			function renderImageList() {
+				const files = currentDraft().imageFiles || [];
+				get('image-upload-list').hidden = files.length === 0;
+				get('image-file-list').replaceChildren(...files.map((name) => {
+					const item = document.createElement('li');
+					item.textContent = name;
+					return item;
+				}));
+			}
 			function preview() {
 				const post = readPost();
 				try {
@@ -231,6 +253,12 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 				get('preview-article').dataset.category = post.category;
 				const html = marked.parse(post.body || '본문을 입력하면 미리보기가 표시됩니다.', { async: false }) as string;
 				get('preview-body').innerHTML = DOMPurify.sanitize(html, { FORBID_TAGS: ['iframe', 'form', 'style'] });
+				const localImages = imagePreviews.get(workspace.activeId);
+				get('preview-body').querySelectorAll('img').forEach((img) => {
+					const path = new URL(img.getAttribute('src') || '', location.href).pathname;
+					const localUrl = localImages?.get(path);
+					if (localUrl) img.src = localUrl;
+				});
 				get('preview-body').querySelectorAll('a').forEach((link) => {
 					link.target = '_blank'; link.rel = 'noopener noreferrer';
 				});
@@ -244,6 +272,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 				draft.checked = Boolean(item.post.draft);
 				workspace.activeId = item.id;
 				renderList();
+				renderImageList();
 				preview();
 				loading = false;
 			}
@@ -294,7 +323,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 			form.addEventListener('input', queueSave);
 			form.addEventListener('change', (event) => {
-				if (event.target !== list && event.target !== fileInput) queueSave();
+				if (event.target !== list && event.target !== fileInput && event.target !== imageInput) queueSave();
 			});
 			list.addEventListener('change', () => {
 				const selectedId = list.value;
@@ -315,6 +344,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 				const item = currentDraft();
 				if (!confirm(`“${item.post.title || '제목 없는 글'}”을 이 브라우저에서 삭제할까요?`)) return;
 				clearTimeout(saveTimer);
+				imagePreviews.get(item.id)?.forEach((url) => URL.revokeObjectURL(url));
+				imagePreviews.delete(item.id);
 				workspace.drafts = workspace.drafts.filter((draft) => draft.id !== item.id);
 				if (!workspace.drafts.length) workspace.drafts.push(newDraft());
 				showDraft(workspace.drafts[0]);
@@ -322,6 +353,37 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 				status.textContent = '';
 			});
 			get('import-post').addEventListener('click', () => fileInput.click());
+			get('insert-image').addEventListener('click', () => imageInput.click());
+			imageInput.addEventListener('change', () => {
+				const file = imageInput.files?.[0];
+				imageInput.value = '';
+				if (!file) return;
+				try {
+					if (!file.type.startsWith('image/')) throw new Error('그림 파일을 선택해 주세요.');
+					const markup = makeImageMarkdown(file.name, import.meta.env.BASE_URL);
+					const path = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/images/${encodeURIComponent(file.name)}`;
+					const item = currentDraft();
+					const images = imagePreviews.get(item.id) || new Map<string, string>();
+					const previous = images.get(path);
+					if (previous) URL.revokeObjectURL(previous);
+					images.set(path, URL.createObjectURL(file));
+					imagePreviews.set(item.id, images);
+					item.imageFiles = [...new Set([...(item.imageFiles || []), file.name])];
+					const start = bodyField.selectionStart;
+					const end = bodyField.selectionEnd;
+					const before = bodyField.value.slice(0, start);
+					const after = bodyField.value.slice(end);
+					const prefix = before && !before.endsWith('\n\n') ? (before.endsWith('\n') ? '\n' : '\n\n') : '';
+					const suffix = after && !after.startsWith('\n\n') ? (after.startsWith('\n') ? '\n' : '\n\n') : '';
+					const insertion = `${prefix}${markup}${suffix}`;
+					bodyField.value = `${before}${insertion}${after}`;
+					bodyField.focus();
+					bodyField.setSelectionRange(start + prefix.length, start + prefix.length + markup.length);
+					bodyField.dispatchEvent(new Event('input', { bubbles: true }));
+					renderImageList();
+					status.textContent = `“${file.name}”을 본문에 넣었습니다. GitHub 그림 폴더에도 원본 파일을 올려주세요.`;
+				} catch (error) { status.textContent = (error as Error).message; }
+			});
 			fileInput.addEventListener('change', async () => {
 				const file = fileInput.files?.[0];
 				fileInput.value = '';
@@ -356,7 +418,10 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 				} catch (error) { status.textContent = (error as Error).message; }
 			});
 			form.addEventListener('submit', (event) => event.preventDefault());
-			window.addEventListener('pagehide', () => { if (saveTimer) saveCurrent(); });
+			window.addEventListener('pagehide', () => {
+				if (saveTimer) saveCurrent();
+				imagePreviews.forEach((images) => images.forEach((url) => URL.revokeObjectURL(url)));
+			});
 		</script>
 	</body>
 </html>
@@ -514,6 +579,28 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 		line-height: 1.7;
 		tab-size: 2;
 	}
+	.body-toolbar {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		flex-wrap: wrap;
+	}
+	.body-toolbar button {
+		min-height: 40px;
+		padding: 7px 14px;
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		background: var(--bg);
+		color: var(--text);
+		cursor: pointer;
+	}
+	.body-toolbar button:hover {
+		border-color: var(--accent-2);
+	}
+	.body-toolbar span {
+		color: var(--text-muted);
+		font-size: 12px;
+	}
 	.editor-tip {
 		color: var(--text-muted);
 		font-size: 12px;
@@ -585,6 +672,22 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 	}
 	.upload-guide li + li {
 		margin-top: 8px;
+	}
+	.image-upload-list {
+		margin-top: 20px;
+		padding-top: 16px;
+		border-top: 1px solid var(--border);
+	}
+	.image-upload-list[hidden] {
+		display: none;
+	}
+	.image-upload-list ul {
+		margin: 8px 0;
+		padding-left: 24px;
+	}
+	.image-upload-list p {
+		font-size: 12px;
+		margin: 8px 0 0;
 	}
 	.draft-option {
 		display: flex;

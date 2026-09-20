@@ -33,6 +33,16 @@ export function makeFilename(title, date = new Date()) {
 	return `${parts.year}-${parts.month}-${parts.day}-${parts.hour}${parts.minute}-${slug}.md`;
 }
 
+export function makeImageMarkdown(filename, base = '/blog') {
+	if (!filename || /[\\/\u0000-\u001f]/.test(filename))
+		throw new Error('그림 파일 이름을 확인해 주세요.');
+	const alt = filename
+		.replace(/\.[^.]+$/, '')
+		.replace(/[-_]+/g, ' ')
+		.replace(/[\\[\]]/g, '\\$&');
+	return `![${alt}](${base.replace(/\/$/, '')}/images/${encodeURIComponent(filename)})`;
+}
+
 export function validatePost(post) {
 	if (!post.title.trim()) return '제목을 입력해 주세요.';
 	if (!post.description.trim()) return '요약을 입력해 주세요.';

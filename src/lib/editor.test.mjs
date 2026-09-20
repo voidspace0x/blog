@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
 	makeFilename,
+	makeImageMarkdown,
 	makeSlug,
 	parsePost,
 	serializePost,
@@ -45,4 +46,12 @@ test('importing and downloading an existing post keeps its URL metadata', () => 
 
 test('a malformed Markdown frontmatter is rejected', () => {
 	assert.throws(() => parsePost('## 본문만 있음'), /frontmatter/);
+});
+
+test('image markup keeps the Pages base path and encodes filenames', () => {
+	assert.equal(
+		makeImageMarkdown('우주 사진 1.png', '/blog'),
+		'![우주 사진 1](/blog/images/%EC%9A%B0%EC%A3%BC%20%EC%82%AC%EC%A7%84%201.png)',
+	);
+	assert.throws(() => makeImageMarkdown('../outside.png'), /파일 이름/);
 });

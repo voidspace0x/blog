@@ -136,6 +136,11 @@ textarea {
 	color: var(--accent-2);
 	margin-left: -8px;
 }
+.brand-icon {
+	width: 30px;
+	height: 30px;
+	flex-shrink: 0;
+}
 .internal-links {
 	display: flex;
 	gap: 32px;

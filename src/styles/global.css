@@ -217,7 +217,7 @@ textarea {
 	border-bottom: 1px solid var(--border);
 }
 .eyebrow {
-	font-family: 'JetBrains Mono', monospace;
+	font-family: 'JetBrains Mono', 'Pretendard Variable', Pretendard, monospace;
 	font-size: 11px;
 	letter-spacing: 0.15em;
 	color: var(--text-muted);
@@ -325,7 +325,7 @@ textarea {
 	left: 0;
 	right: 0;
 	text-align: center;
-	font-family: 'JetBrains Mono', monospace;
+	font-family: 'JetBrains Mono', 'Pretendard Variable', Pretendard, monospace;
 	font-size: 9px;
 	letter-spacing: 0.2em;
 	color: var(--text-muted);
@@ -352,7 +352,7 @@ textarea {
 	font-size: 22px;
 }
 .section-index {
-	font-family: 'JetBrains Mono', monospace;
+	font-family: 'JetBrains Mono', 'Pretendard Variable', Pretendard, monospace;
 	font-size: 12px;
 	letter-spacing: 0;
 	color: var(--text-muted);
@@ -386,7 +386,7 @@ textarea {
 	background: var(--surface-hover);
 }
 .category-nav a span {
-	font-family: 'JetBrains Mono', monospace;
+	font-family: 'JetBrains Mono', 'Pretendard Variable', Pretendard, monospace;
 	font-size: 11px;
 	color: var(--text-muted);
 }
@@ -432,7 +432,7 @@ textarea {
 	font-size: 12px;
 }
 .post-meta time {
-	font-family: 'JetBrains Mono', monospace;
+	font-family: 'JetBrains Mono', 'Pretendard Variable', Pretendard, monospace;
 	font-size: 11px;
 	letter-spacing: 0.015em;
 }
@@ -552,7 +552,7 @@ textarea {
 	color: #78869b;
 }
 .site-footer small {
-	font-family: 'JetBrains Mono', monospace;
+	font-family: 'JetBrains Mono', 'Pretendard Variable', Pretendard, monospace;
 	font-size: 10px;
 }
 .back-link {
@@ -650,7 +650,7 @@ textarea {
 	text-decoration-color: var(--text);
 }
 code {
-	font-family: 'JetBrains Mono', monospace;
+	font-family: 'JetBrains Mono', 'Pretendard Variable', Pretendard, monospace;
 	font-size: 0.84em;
 	background: var(--surface);
 	border: 1px solid var(--border);
@@ -820,7 +820,7 @@ hr {
 	margin: 24px 0 8px;
 }
 .not-found h1 {
-	font-family: 'JetBrains Mono', monospace;
+	font-family: 'JetBrains Mono', 'Pretendard Variable', Pretendard, monospace;
 	font-size: 96px;
 	color: var(--accent);
 	margin-bottom: 16px;

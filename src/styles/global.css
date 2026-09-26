@@ -210,7 +210,7 @@ textarea {
 }
 .hero {
 	display: grid;
-	grid-template-columns: 7fr 3fr;
+	grid-template-columns: 6fr 4fr;
 	align-items: center;
 	padding: 40px 0 36px;
 	gap: 32px;
@@ -280,7 +280,7 @@ textarea {
 	min-height: 44px;
 }
 .orbit-art {
-	width: 240px;
+	width: min(100%, 360px);
 	justify-self: center;
 }
 .orbit-illustration {
